@@ -1,6 +1,8 @@
 # giftools
 Scripts to manipulate gifs by drag-and-drop in masse
 
+Requirement: PIL
+
 ## Scaler
 
 Reduce/Redux/Resample call scale_image.py with fixed parameters. Works on animated gifs.
