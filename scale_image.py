@@ -1,0 +1,121 @@
+from PIL import Image
+import os.path
+import sys
+from statistics import mode
+
+
+    
+
+def majority_resample(image,zoom):
+    #image.show()
+    #pal = image.getpalette()
+    #image = image.convert("RGB")
+    #image.show()
+    w,h = image.size
+    w,h=int(round(w*zoom)),int(round(h*zoom))
+    out = image.crop((0,0,w,h))#Image.new(mode="RGB", size=(w,h))
+    orig_pixels=[[list() for y in range(h)] for x in range(w)]
+    
+    #print(image.width,image.height,w,h)
+    for x in range(image.width):
+        for y in range(image.height):
+            X=min(int(x*zoom),w-1)
+            Y=min(int(y*zoom),h-1)
+            orig_pixels[X][Y].append(image.getpixel((x,y)))
+            #print(X,Y,x,y,image.getpixel((x,y)))
+    for x in range(out.width):
+        for y in range(out.height):
+            try:
+                #print(x,y,len(orig_pixels[x][y]))
+                out.putpixel((x,y),mode(orig_pixels[x][y]))
+            except:
+                pass
+    #out.show()
+    #out = out.quantize(palette=pal,dither=0)
+    return out
+        
+
+def scale_file(filename,zoom,mode="mode"):
+    im = Image.open(filename)
+    if(zoom<0):
+        zoom=-1/zoom
+    name,extension = os.path.splitext(filename)
+    output = list()
+    #print(im.tell())
+    try:
+        while 1:
+            w,h = im.size
+            w,h=int(round(w*zoom)),int(round(h*zoom))
+            #print(w,h)
+            #print(mode)
+            if(zoom>=1 or mode=="nearest"):
+                output.append(im.resize((w,h),resample=Image.NEAREST))
+            else:
+                output.append(majority_resample(im,zoom))
+            
+            
+            
+            im.seek(im.tell()+1)
+            duration = im.info['duration']
+            #print(im.tell())
+            # do something to im
+    except EOFError:
+        pass # end of sequence
+        
+        
+    if(zoom<1 and 1/zoom==int(1/zoom)):
+        zoomtext = "_D"+str(int(1/zoom))
+        if(mode=="nearest"):
+            zoomtext = "_N"+str(int(1/zoom))
+            
+    else:
+        if(zoom==int(zoom)):
+            zoom = int(zoom)
+        zoomtext = "_X"+str(zoom)
+    outname = name+zoomtext+extension
+    print(outname, file=sys.stdout)
+    if(len(output)>1):
+        output[0].save(outname, save_all=True,append_images=output[1:], optimize=True, disposal=2, duration=duration, loop=0)
+    
+    else:
+        output[0].save(outname)
+        
+def is_float(value):
+    try:
+        float(value)
+        return True
+    except:
+        return False
+
+if __name__ == "__main__":
+    import sys
+    #print(sys.argv)
+    if(len(sys.argv)>1):
+        file = None
+        zoom = None
+        mode="mode"
+        
+        for arg in sys.argv[1:]:
+            if(is_float(arg)):
+                zoom = float(arg)
+                
+        for arg in sys.argv[1:]:
+            if(arg[0]=="+"):
+                mode=arg[1:]
+                
+        if not zoom:
+            exit("Please provide a zoom value!")
+        for arg in sys.argv[1:]:
+            if(is_float(arg)):
+                zoom = float(arg)
+            elif(arg[0]=="+"):
+                mode=arg[1:]
+            else:
+                file=arg
+                scale_file(file,zoom,mode)
+                #Multiple files: multiple calls
+                #Multiple zooms: applied in-order
+        if not file:
+            exit("Please provide a file!")
+    else:
+        input("Usage: python scalevalueFLOAT Negative filetoscalePNG/GIF \nvalues will scale to 1/value rather than flipping\nmultiple values and files accepted in-order")
