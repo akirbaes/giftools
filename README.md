@@ -1,2 +1,20 @@
 # giftools
 Scripts to manipulate gifs by drag-and-drop in masse
+
+Reduce/Redux/Resample call scale_image.py with fixed parameters. Works on animated gifs.
+
+generate_palette.py creates a palette.sh file that calls transfer_palette.py with fixed characters. 
+
+transfer_palette.py copies the palette from the first parameter and applies it on the second parameter. Works on gifs (source), gifs and folders of pngs (target).
+
+Drag-and-drop is recommended.
+
+#Examples
+
+reduce D2, D4, D8 divides the size by 2, 4, 8. It uses statistics.mode to determine the output color. Not that good.
+
+redux nearest 4,8 does the same but uses nearest neighbour (center, one right one bottom) to determine the output color.
+
+resample X8 multiplies the size by 8. Sharp nearest neighbour.
+
+![gloria_fidelis.gif]("gloria_fidelis.gif" "Palette color source") x ![Earth Pricess aura.gif]("Earth Pricess aura.gif" "Target gif for recoloration") = ![Earth Pricess aura_COL_gloria_fidelis.gif]("Earth Pricess aura_COL_gloria_fidelis.gif" "Resulting recolored gif with source's palette")
