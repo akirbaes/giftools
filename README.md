@@ -17,4 +17,4 @@ redux nearest 4,8 does the same but uses nearest neighbour (center, one right on
 
 resample X8 multiplies the size by 8. Sharp nearest neighbour.
 
-![Palette color source: gloria_fidelis.gif](gloria_fidelis.gif) x ![Target gif for recoloration: Earth Pricess aura.gif](Earth Pricess aura.gif) = ![Resulting recolored gif with source's palette: Earth Pricess aura_COL_gloria_fidelis.gif](Earth Pricess aura_COL_gloria_fidelis.gif)
+![Palette color source: gloria_fidelis.gif](gloria_fidelis.gif) x ![Target gif for recoloration: Earth Pricess aura.gif](Earth\ Pricess\ aura.gif) = ![Resulting recolored gif with source's palette: Earth Pricess aura_COL_gloria_fidelis.gif](Earth\ Pricess\ aura_COL_gloria_fidelis.gif)
