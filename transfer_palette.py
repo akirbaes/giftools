@@ -9,6 +9,7 @@ import os
     return pal"""
     
 def index_image(image,palette=None):
+    print(palette.mode)
     return image.quantize(colors=256, method=None, kmeans=0, palette=palette, dither=0)
     
 def create_gif_from_folder(foldername,outputname=None,palette=None):
@@ -48,7 +49,7 @@ try:
             target=sys.argv[2]
                 
             #pal = load_palette(source)
-            pal = Image.open(source)
+            pal = Image.open(source).quantize(colors=256, method=None, kmeans=0, palette=None, dither=0)
             
             name,extension = os.path.splitext(source)
             if(os.path.isdir(target)):
