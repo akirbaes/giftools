@@ -33,3 +33,11 @@ Changes the background color to the set color.
 ## Gif retimer
 
 Changes the framerate of the git to the set miliseconds.
+
+## Stacker
+
+Stack two or more gifs together, horizontally (default) or vertically.
+
+If the frame amounts are different, it will duplicate them (as long as it's an integer number).
+
+If the sizes are different, different centering methods will be used.

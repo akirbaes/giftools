@@ -1,6 +1,7 @@
 from PIL import Image
 import os.path
 import os
+BGCOLOR = (255,255,255)
 HOR = 0
 VER = 1
 """def load_palette(filename):
@@ -43,8 +44,8 @@ def stack_gifs_hor(filenames,centering="center"):
         height=max(height,im.height)
         try:
             lengths.append(im.n_frames)
-            total_length=im.n_frames
-            total_duration = im.n_frames*im.info['duration']
+            total_length=max(total_length,im.n_frames)
+            total_duration = max(im.n_frames*im.info['duration'],total_duration)
         except:
             lengths.append(1)
     
@@ -53,7 +54,7 @@ def stack_gifs_hor(filenames,centering="center"):
     print(lengths)
     
     for t in range(total_length):
-        target =  Image.new('RGB', (width, height), (0,0,0))
+        target =  Image.new('RGB', (width, height), BGCOLOR)
         results.append(target)
         
     for i,img in enumerate(images):
@@ -67,8 +68,12 @@ def stack_gifs_hor(filenames,centering="center"):
             for target in results:
                 target.paste(img,(x,y))
         else:
+            ratio = int(total_length/length)
+            print("Anim of length",length,"of ratio",ratio)
             for j in range(length):
-                results[j].paste(img,(x,y))
+                for k in range(ratio):
+                    print("Image",i,"frame",j,"ratio",k)
+                    results[j*ratio+k].paste(img,(x,y))
                 try:
                     img.seek(img.tell()+1)
                 except:
@@ -111,7 +116,7 @@ def stack_gifs_ver(filenames,centering):
     print(lengths)
     
     for t in range(total_length):
-        target =  Image.new('RGB', (width, height), (0,0,0))
+        target =  Image.new('RGB', (width, height), BGCOLOR)
         results.append(target)
         
     for i,img in enumerate(images):
@@ -189,3 +194,4 @@ except Exception as E:
     import traceback
     traceback.print_exc()
     input("Failure")
+#input("End")
