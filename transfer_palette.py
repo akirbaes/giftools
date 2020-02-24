@@ -2,11 +2,11 @@ from PIL import Image
 import os.path
 import os
 
-"""def load_palette(filename):
-    im = Image.open(filename)
-    pal = im.getpalette()
-    print(pal)
-    return pal"""
+#Transfers one image's palette to another.
+#Usage: python transfer_palette.py sourceImage targetImage
+#target can be a folder full of pngs. It will compile them into a gif.
+
+#You can also use generate_palette.py to create a bash script that makes the argument pass easier with drag-and-drop.
     
 def index_image(image,palette=None):
     print(palette.mode)
@@ -17,7 +17,8 @@ def create_gif_from_folder(foldername,outputname=None,palette=None):
     for file in os.listdir(foldername):
         if file.endswith(".png"):
             im = Image.open(foldername+os.sep+file)
-            images.append(index_image(im,palette))
+            im2=im.convert("RGB")
+            images.append(index_image(im2,palette))
 
     images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=True, disposal=2, duration=30, loop=0) #, transparency=0
 
@@ -38,8 +39,8 @@ def create_gif_from_gif(filename,outputname=None,palette=None):
     except:
         for im in images:
             del im.info['transparency']
+            #Transparency has to be deleted because of a bug in PIL. Restore it with change_background.py
         images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=True, disposal=2, duration=duration, loop=0)
-        #images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=True, disposal=2, duration=duration, loop=0, transparency=0)
         
 try:
     if __name__ == "__main__":
@@ -60,5 +61,15 @@ try:
                 sname = os.path.splitext(os.path.basename(source))[0]
                 create_gif_from_gif(target,tname+"_COL_"+sname+".gif",palette=pal)
 except Exception as E:
+    print(E)
     input("Failure")
     raise E
+    
+    
+    
+"""def load_palette(filename):
+    im = Image.open(filename)
+    pal = im.getpalette()
+    print(pal)
+    return pal
+    #This doesn't work because getpalette doesn't return an useable palette data for quantize..."""
