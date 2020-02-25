@@ -4,6 +4,17 @@ import sys
 from statistics import mode
 import numpy as np
 
+def get_outline_color(image):
+    bgc = get_background_color(image)
+    colors = list()
+    for j in range(image.height):
+        for i in range(image.width):
+            col = image.getpixel((i,j))
+            if(col)!=bgc:
+                colors.append(col)
+                break
+    print(colors)
+    return mode(colors)
 
 def get_background_color(image):
     return mode((image.getpixel((0,0)),image.getpixel((-1,0)),image.getpixel((0,-1)),image.getpixel((-1,-1))))
@@ -71,6 +82,7 @@ def set_rgb_background(image, color=(255, 255, 255), alpha = 255):
     
 def set_paletted_background(image,color=(255,255,255), transparent = False):
     #For paletted images to not collapse similar colors
+    print(color)
     image=image.copy() #For some strange reason it reverted to original palette without this
     palettedata = image.getpalette()
     background_color = get_background_color(image) #must be a palette ID
@@ -95,9 +107,9 @@ def set_paletted_background(image,color=(255,255,255), transparent = False):
 def set_background(image,color=(255,255,255), set_transparent = False):
     print("Mode:",image.mode)
     if(image.mode=="P"):
-        return set_paletted_background(image,background_color,set_transparent)
+        return set_paletted_background(image,color,set_transparent)
     else:
-        return set_rgb_background(image,background_color,(not set_transparent)*255)
+        return set_rgb_background(image,color,(not set_transparent)*255)
     
 def color_background(filename, background_color):
     im = Image.open(filename)
@@ -105,7 +117,13 @@ def color_background(filename, background_color):
     try:
         while 1:
             #im.show()
-            out=set_background(im,background_color)
+            if(background_color=="outline"):
+                color = get_outline_color(im.copy().convert("RGB"))
+                r,b,g= color
+                color = r-(r==255)+(r<255),g,b
+                out=set_background(im,color)
+            else:
+                out=set_background(im,background_color)
             output.append(out)
             #out.show()
             im.seek(im.tell()+1)
@@ -160,12 +178,15 @@ def remove_background(filename):
 
 if __name__ == "__main__":
     remove = True
+    background_color = tuple()
     print(sys.argv[1:])
     if "--remove" in sys.argv:
         remove = True
     if "--color" in sys.argv:
         remove = False
-    background_color = tuple()
+    if "--outline" in sys.argv:
+        remove = False
+        background_color = "outline"
     if(len(sys.argv)>1):
         
         for arg in sys.argv[1:]:
@@ -175,6 +196,9 @@ if __name__ == "__main__":
                 remove = True
             elif arg=="--color":
                 remove=False
+            elif arg=="--outline":
+                remove=False
+                background_color = "outline"
             else:
                 if(remove):
                     remove_background(arg)
