@@ -3,6 +3,8 @@ Scripts to manipulate gifs by drag-and-drop in masse
 
 Requirement: PIL	
 
+Recommended: gifsicle to unoptimize gifs (often source of errors in brute manipulation)
+
 ## Scaler	
 
 Reduce/Redux/Resample call scale_image.py with fixed parameters. Works on animated gifs.	
