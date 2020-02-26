@@ -20,6 +20,9 @@ def create_gif_from_folder(foldername,outputname=None,palette=None):
             im2=im.convert("RGB")
             images.append(index_image(im2,palette))
 
+    for im in images:
+        im.info['transparency']=None
+        del im.info['transparency']
     images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=True, disposal=2, duration=30, loop=0) #, transparency=0
 
 def create_gif_from_gif(filename,outputname=None,palette=None):
@@ -38,6 +41,7 @@ def create_gif_from_gif(filename,outputname=None,palette=None):
         images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=True, disposal=2, duration=duration, loop=0)
     except:
         for im in images:
+            im.info['transparency']=None
             del im.info['transparency']
             #Transparency has to be deleted because of a bug in PIL. Restore it with change_background.py
         images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=True, disposal=2, duration=duration, loop=0)
