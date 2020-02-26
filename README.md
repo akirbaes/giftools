@@ -24,7 +24,7 @@ transfer_palette.py copies the palette from the first parameter and applies it o
 
 ### Example	
 
-![Palette color source: gloria_fidelis.gif](gloria_fidelis.gif) x ![Target gif for recoloration: Earth Pricess aura.gif](Earth%20Pricess%20aura.gif) = ![Resulting recolored gif with source's palette: Earth Pricess aura_COL_gloria_fidelis.gif](Earth%20Pricess%20aura_COL_gloria_fidelis.gif)
+![Palette color source: gloria_fidelis.gif](Examples/gloria_fidelis.gif) x ![Target gif for recoloration: Earth Pricess aura.gif](Examples/EarthPrincess.gif) → ![Resulting recolored gif with source's palette: Earth Pricess aura_COL_gloria_fidelis.gif](Examples/EarthPrincess_COL_gloria_fidelis.gif)
 
 ## Background changer
 
@@ -41,3 +41,11 @@ Stack two or more gifs together, horizontally (default) or vertically.
 If the frame amounts are different, it will duplicate them (as long as it's an integer number).
 
 If the sizes are different, different centering methods will be used.
+
+## Rearanger
+
+If the order in which things are stacked is not up to tastes, can easily re-shift the squares by inputing the divisions (width, height) of the source and the result.
+
+>python rearange_gif.py 1 3 3 1 Examples/EarthPrincess.gif
+
+![Starting EarthPrincess gif](Examples/EarthPrincess.gif) → ![Rearanged EarthPrincess gif](Examples/EarthPrincess.gif%203x1.gif)
