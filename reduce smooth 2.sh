@@ -12,7 +12,8 @@ do
     NAME="${FULLNAME%.*}"
     EXTENSION="${FULLNAME##*.}"
     echo "Creating ${NAME}_D${ZOOM_AMOUNT}.${EXTENSION}"
-    OUTFILE=`python "$PYSCRIPTPATH" -"$ZOOM_AMOUNT" "$FULLNAME"`
+    python "$PYSCRIPTPATH" -"$ZOOM_AMOUNT" "$FULLNAME"
+    #OUTFILE=`python "$PYSCRIPTPATH" -"$ZOOM_AMOUNT" "$FULLNAME"`
     #gifsicle -O3 "${OUTFILE}" -o "${OUTFILE}"
 done
 )# && read  -n 1 -p "Done. Press enter." mainmenuinput 

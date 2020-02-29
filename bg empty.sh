@@ -5,7 +5,7 @@ echo ALL : $@
 PARAM_FOLDER="${1%\\*}" #The python script will be local to the image (for creating new ones)
 cd "$PARAM_FOLDER"
 (
-bash "${0%\\*}\\_unoptimize_gif.sh" "$@"
+#bash "${0%\\*}\\_unoptimize_gif.sh" "$@"
 echo python "$PYSCRIPTPATH" "$@"
 python "$PYSCRIPTPATH" "$@"
 )
