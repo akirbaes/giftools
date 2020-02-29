@@ -1,19 +1,22 @@
 from PIL import Image
 import os.path
 import sys
-from statistics import mode
+import statistics
 
 
     
+def get_background_color(image):
+    return statistics.mode((image.getpixel((0,0)),image.getpixel((-1,0)),image.getpixel((0,-1)),image.getpixel((-1,-1))))
 
 def majority_resample(image,zoom):
+    bgc=get_background_color(image)
     #image.show()
     #pal = image.getpalette()
     #image = image.convert("RGB")
     #image.show()
     w,h = image.size
     w,h=int(round(w*zoom)),int(round(h*zoom))
-    out = image.crop((0,0,w,h))#Image.new(mode="RGB", size=(w,h))
+    out = image.copy().crop((0,0,w,h))#Image.new(mode="RGB", size=(w,h))
     orig_pixels=[[list() for y in range(h)] for x in range(w)]
     
     #print(image.width,image.height,w,h)
@@ -23,14 +26,18 @@ def majority_resample(image,zoom):
             Y=min(int(y*zoom),h-1)
             orig_pixels[X][Y].append(image.getpixel((x,y)))
             #print(X,Y,x,y,image.getpixel((x,y)))
+    #print(zoom)
+    #print(orig_pixels)
     for x in range(out.width):
         for y in range(out.height):
             try:
                 #print(x,y,len(orig_pixels[x][y]))
-                out.putpixel((x,y),mode(orig_pixels[x][y]))
-            except:
+                if(bgc in orig_pixels[x][y]):
+                    orig_pixels[x][y].remove(bgc) #remove one
+                out.putpixel((x,y),statistics.mode(orig_pixels[x][y]))
+            except Exception as e:
+                print(e)
                 pass
-    #out.show()
     #out = out.quantize(palette=pal,dither=0)
     return out
         
