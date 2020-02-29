@@ -175,35 +175,40 @@ def remove_background(filename):
         else:
             output[0].save(outname)
         
-
-if __name__ == "__main__":
-    remove = True
-    background_color = tuple()
-    print(sys.argv[1:])
-    if "--remove" in sys.argv:
+try:
+    if __name__ == "__main__":
         remove = True
-    if "--color" in sys.argv:
-        remove = False
-    if "--outline" in sys.argv:
-        remove = False
-        background_color = "outline"
-    if(len(sys.argv)>1):
-        
-        for arg in sys.argv[1:]:
-            if(arg.isnumeric()):
-                background_color+=int(arg),
-            elif arg=="--remove":
-                remove = True
-            elif arg=="--color":
-                remove=False
-            elif arg=="--outline":
-                remove=False
-                background_color = "outline"
-            else:
-                if(remove):
-                    remove_background(arg)
+        background_color = tuple()
+        print(sys.argv[1:])
+        if "--remove" in sys.argv:
+            remove = True
+        if "--color" in sys.argv:
+            remove = False
+        if "--outline" in sys.argv:
+            remove = False
+            background_color = "outline"
+        if(len(sys.argv)>1):
+            
+            for arg in sys.argv[1:]:
+                if(arg.isnumeric()):
+                    background_color+=int(arg),
+                elif arg=="--remove":
+                    remove = True
+                elif arg=="--color":
+                    remove=False
+                elif arg=="--outline":
+                    remove=False
+                    background_color = "outline"
                 else:
-                    color_background(arg,background_color)
-    else:
-        input("Error. Pass an image")
-    #input("Done")
+                    if(remove):
+                        remove_background(arg)
+                    else:
+                        color_background(arg,background_color)
+        else:
+            input("Error. Pass an image")
+        #input("Done")
+except Exception as E:
+    print(E)
+    import traceback
+    traceback.print_exc()
+    input("Failure")
