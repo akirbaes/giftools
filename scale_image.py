@@ -44,6 +44,7 @@ def majority_resample(image,zoom):
 
 def scale_file(filename,zoom,mode="mode"):
     im = Image.open(filename)
+    transparency = im.info.get("transparency",None)
     if(zoom<0):
         zoom=-1/zoom
     name,extension = os.path.splitext(filename)
@@ -82,7 +83,10 @@ def scale_file(filename,zoom,mode="mode"):
     outname = name+zoomtext+extension
     print(outname, file=sys.stdout)
     if(len(output)>1):
-        output[0].save(outname, save_all=True,append_images=output[1:], optimize=True, disposal=2, duration=duration, loop=0)
+        if(transparency!=None):
+            output[0].save(outname, save_all=True,append_images=output[1:], optimize=True, disposal=2, transparency=transparency, duration=duration, loop=0)
+        else:
+            output[0].save(outname, save_all=True,append_images=output[1:], optimize=True, disposal=2, duration=duration, loop=0)
     
     else:
         output[0].save(outname)
