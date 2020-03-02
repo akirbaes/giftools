@@ -69,6 +69,8 @@ def get_background_color(image):
     return mode((image.getpixel((0,0)),image.getpixel((-1,0)),image.getpixel((0,-1)),image.getpixel((-1,-1))))
     
 def deal_transparency(image):
+    if(image.mode=="RGB"):
+        return image, None
     image=image.copy()
     data = np.array(image)
     # print(data)
@@ -105,7 +107,10 @@ def create_gif_from_folder(foldername,outputname=None,palette=None):
             im2, mask=deal_transparency(im)
             im2=im2.convert("RGB")
             palette=remove_unused_color_from_palette(palette)
-            images.append(reset_transparency(index_image(im2,palette),mask))
+            im2 = index_image(im2,palette)
+            if(mask!=None):
+                im2=reset_transparency(im2,mask)
+            images.append(im2)
 
     for im in images:
         im.info['transparency']=None
