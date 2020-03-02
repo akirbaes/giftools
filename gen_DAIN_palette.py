@@ -6,7 +6,7 @@ try:
         if(len(sys.argv)>1):
             for arg in sys.argv[1:]:
                 name,extension = os.path.splitext(arg)
-                file = open(name+"_palette.sh","w")
+                file = open(name+"_DAINpalette.sh","w")
                 file.write('cd "${0%\\\\*}"' +"""
 (
 python \""""+os.getcwd()+os.sep+"""transfer_palette.py" "%s" "$1""\\interpolated_frames" ;
