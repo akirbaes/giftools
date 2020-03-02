@@ -108,7 +108,7 @@ def create_gif_from_folder(foldername,outputname=None,palette=None):
             im2=im2.convert("RGB")
             palette=remove_unused_color_from_palette(palette)
             im2 = index_image(im2,palette)
-            if(mask!=None):
+            if not(mask is None):
                 im2=reset_transparency(im2,mask)
             images.append(im2)
 
