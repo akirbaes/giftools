@@ -294,8 +294,8 @@ def fill_rgb_background(image, color=None):
         x,y = coords.pop()
         if(0<=x<width and 0<=y<height):
             #print("Test:",x,y,'<',data.shape) #X and Y are to call in Y,X order
-            if(np.array_equal(data[y][x],old_bg)):
-                data[y][x][-1]=0
+            if(np.array_equal(data[y][x],old_bg) and data[y][x][3]!=0):
+                data[y][x][3]=0
                 coords.append((x,y-1))
                 coords.append((x,y+1))
                 coords.append((x-1,y))
