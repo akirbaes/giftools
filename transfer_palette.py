@@ -2,7 +2,7 @@ from PIL import Image
 import os.path
 import os
 import numpy as np 
-
+alpha_limit = 130
 #Transfers one image's palette to another.
 #Usage: python transfer_palette.py sourceImage targetImage
 #target can be a folder full of pngs. It will compile them into a gif.
@@ -76,8 +76,8 @@ def deal_transparency(image):
     # print(data)
     alpha = data[:,:,3:]
     #print(np.unique(alpha))
-    alpha[alpha<=128]=0
-    alpha[alpha>128]=255
+    alpha[alpha<=alpha_limit]=0
+    alpha[alpha>alpha_limit]=255
     alphaonly = data[:,:,3].copy()//255
     result = Image.fromarray(data)
     #print(np.unique(alphaonly))
@@ -130,13 +130,13 @@ def create_gif_from_gif(filename,outputname=None,palette=None):
     except EOFError:
         pass # end of sequence
     try:
-        images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=True, disposal=2, duration=duration, loop=0)
+        images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=False, disposal=2, duration=duration, loop=0)
     except:
         for im in images:
             im.info['transparency']=None
             del im.info['transparency']
             #Transparency has to be deleted because of a bug in PIL. Restore it with change_background.py
-        images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=True, disposal=2, duration=duration, loop=0)
+        images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=False, disposal=2, duration=duration, loop=0)
         
 try:
     if __name__ == "__main__":
