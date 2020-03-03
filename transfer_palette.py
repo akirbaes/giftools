@@ -130,38 +130,41 @@ def create_gif_from_folder(foldername,outputname=None,palette=None):
     print(durations)
     images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=False, transparency=255, disposal=2, duration=durations, loop=0) 
 
-def create_gif_from_gif(filename,outputname=None,palette=None):
-    images = list()
+def create_gif_from_image(filename,outputname=None,palette=None):
     im = Image.open(filename)
     
+    images = list()
     durations = list()
     disposals = list()
+    transparency = None
     try:
         while 1:
-            im2=im.convert("RGB")
+            im2=im.convert("RGB") #before that, save the mask  of the transparent areas [TODO]
             images.append(index_image(im2,palette))
-            duration = im.info.get('duration', None)
             
-            if(duration is not None):
-                durations.append(duration)
-            disposal = im.disposal_method
-            if(disposal is not None):
-                disposals.append(disposal)
+            try:
+                transparency=im.info.get('transparency',transparency)
+                print("tp",transparency)
+                durations.append(im.info["duration"])
+                disposals.append(im.disposal_method)
+                # del im.info["transparency"]
+            except Exception as e:
+                # print("Exception",e)
+                durations=None
+                disposals=None
                 
             im.seek(im.tell()+1)
     except EOFError:
         pass # end of sequence
-    try:
-        images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=False, disposal=disposals, duration=durations, loop=0)
-    except:
-        transparency = None
-        for im in images:
-            
-            if(im.info.get('transparency',None) is not None):
-                transparency = im.info['transparency']
-            del im.info['transparency']
-            #Transparency has to be deleted because of a bug in PIL. Restore it with change_background.py
-        images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=False, disposal=disposals, transparency=transparency, duration=durations, loop=0)
+    
+    if(len(images)>1):
+        print(transparency)
+        images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=False, disposal=disposals, duration=durations, transparency=transparency, loop=0)
+    else:
+        if(transparency!=None):
+            images[0].save(outputname, "GIF", optimize=False, transparency=transparency)
+        else:
+            images[0].save(outputname, "GIF", optimize=False)
         
 try:
     if __name__ == "__main__":
@@ -187,7 +190,7 @@ try:
             else:
                 tname = os.path.splitext(target)[0]
                 sname = os.path.splitext(os.path.basename(source))[0]
-                create_gif_from_gif(target,tname+"_COL_"+sname+".gif",palette=pal)
+                create_gif_from_image(target,tname+"_COL_"+sname+".gif",palette=pal)
 except Exception as E:
     print(E)
     import traceback
