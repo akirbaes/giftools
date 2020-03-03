@@ -131,12 +131,31 @@ def color_background(filename, background_color):
     except EOFError:
         pass # end of sequence
     
-    outname = filename
+    outname = generate_outname(filename,background_color)
     if(len(output)>1):
         output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=2, duration=duration, loop=0)
     else:
         output[0].save(outname)
 
+
+def generate_outname(filename,color=None):
+    parts=filename.split(".")
+    nameend = parts[-2] #-1 should be the extension
+    if(color==None):
+        colorcode = "#_empty"
+    else:
+        colorcode = '#%02x%02x%02x' % color
+        
+    try:
+        beginnum = nameend.index("#")
+        if(nameend[beginnum:beginnum+7]=="#_empty"):
+            pass
+        else:
+            old_hexa = int(nameend[beginnum+1:beginnum+6],16)
+        parts[-2] = parts[-2][:beginnum]+colorcode+parts[-2][beginnum+7:]
+    except Exception as E:
+        parts[-2]+=colorcode
+    return ".".join(parts)
 
 def remove_background(filename):
     im = Image.open(filename)
@@ -165,7 +184,8 @@ def remove_background(filename):
     except EOFError:
         pass # end of sequence
         
-    outname = filename
+    outname = generate_outname(filename,None)
+    
     if(len(output)>1):
         output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=2, duration=duration, loop=0, transparency=0)
     else:
