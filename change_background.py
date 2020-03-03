@@ -114,6 +114,8 @@ def set_background(image,color=(255,255,255), set_transparent = False):
 def color_background(filename, background_color):
     im = Image.open(filename)
     output = list()
+    durations = list()
+    disposals = list()
     try:
         while 1:
             #im.show()
@@ -125,6 +127,13 @@ def color_background(filename, background_color):
             else:
                 out=set_background(im,background_color)
             output.append(out)
+            
+            duration = im.info.get('duration', None)
+            if(duration is not None):
+                durations.append(duration)
+            disposal = im.disposal_method
+            if(disposal is not None):
+                disposals.append(disposal)
             #out.show()
             im.seek(im.tell()+1)
             duration = im.info['duration']
@@ -133,7 +142,7 @@ def color_background(filename, background_color):
     
     outname = generate_outname(filename,background_color)
     if(len(output)>1):
-        output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=2, duration=duration, loop=0)
+        output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=disposals, duration=durations, loop=0)
     else:
         output[0].save(outname)
 
@@ -164,6 +173,8 @@ def remove_background(filename):
     #transparency = get_background_color(im) #get the palette ID if necessary
     #NO MORE USEFUL: will be reordered frame-by-frame
     output = list()
+    durations = list()
+    disposals = list()
     try:
         while 1:
             if(im.mode=="P"):
@@ -175,19 +186,25 @@ def remove_background(filename):
                 out = set_background(im,background_color,set_transparent=True) #If several frames have different backgrounds
             #out.show()
             output.append(out)
+            
+            duration = im.info.get('duration', None)
+            if(duration is not None):
+                durations.append(duration)
+            disposal = im.disposal_method
+            if(disposal is not None):
+                disposals.append(disposal)
             """if(im0.mode=="P"):
                 out=out.quantize(colors=256, method=2)
             output.append(set_background(im,background_color).convert("P"))
             """
             im.seek(im.tell()+1)
-            duration = im.info['duration']
     except EOFError:
         pass # end of sequence
         
     outname = generate_outname(filename,None)
     
     if(len(output)>1):
-        output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=2, duration=duration, loop=0, transparency=0)
+        output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=disposals, duration=durations, loop=0, transparency=0)
     else:
         if(output[0].mode=="P"):
             print("Output as",outname,"transparency=",0)
