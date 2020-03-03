@@ -136,7 +136,7 @@ def create_gif_from_image(filename,outputname=None,palette=None):
     images = list()
     durations = list()
     disposals = list()
-    transparency = None
+    transparency = list()
     try:
         while 1:
             im2=im.convert("RGB") #before that, save the mask  of the transparent areas [TODO]
@@ -145,6 +145,7 @@ def create_gif_from_image(filename,outputname=None,palette=None):
             try:
                 transparency=im.info.get('transparency',transparency)
                 print("tp",transparency)
+                
                 durations.append(im.info["duration"])
                 disposals.append(im.disposal_method)
                 # del im.info["transparency"]
@@ -159,10 +160,12 @@ def create_gif_from_image(filename,outputname=None,palette=None):
     
     if(len(images)>1):
         print(transparency)
+        if(len(transparency)!=0):
+            transparency=get_background_color(image[0]) #or rather, use the mask created earlier
         images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=False, disposal=disposals, duration=durations, transparency=transparency, loop=0)
     else:
-        if(transparency!=None):
-            images[0].save(outputname, "GIF", optimize=False, transparency=transparency)
+        if(len(transparency)!=0 and transparency[0]!=None):
+            images[0].save(outputname, "GIF", optimize=False, transparency=transparency[0])
         else:
             images[0].save(outputname, "GIF", optimize=False)
         
@@ -196,8 +199,6 @@ except Exception as E:
     import traceback
     traceback.print_exc()
     input("Failure")
-    
-input("wait")
     
 """def load_palette(filename):
     im = Image.open(filename)
