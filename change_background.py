@@ -20,6 +20,7 @@ def get_background_color(image):
     return mode((image.getpixel((0,0)),image.getpixel((-1,0)),image.getpixel((0,-1)),image.getpixel((-1,-1))))
 
 def reorder_background(image):
+    #Puts the background color at index 0
     image=image.copy()
     palettedata = image.getpalette()
     background_id = get_background_color(image) #must be a palette ID
@@ -111,7 +112,7 @@ def set_background(image,color=(255,255,255), set_transparent = False):
     else:
         return set_rgb_background(image,color,(not set_transparent)*255)
     
-def color_background(filename, background_color):
+def color_all_background(filename, background_color):
     im = Image.open(filename)
     output = list()
     durations = list()
@@ -128,12 +129,11 @@ def color_background(filename, background_color):
                 out=set_background(im,background_color)
             output.append(out)
             
-            duration = im.info.get('duration', None)
-            if(duration is not None):
-                durations.append(duration)
-            disposal = im.disposal_method
-            if(disposal is not None):
-                disposals.append(disposal)
+            try:
+                durations.append(im.info["duration"])
+                disposals.append(im.disposal_method)
+            except:
+                pass
             #out.show()
             im.seek(im.tell()+1)
             duration = im.info['duration']
@@ -146,8 +146,7 @@ def color_background(filename, background_color):
     else:
         output[0].save(outname)
 
-
-def generate_outname(filename,color=None):
+def generate_outname(filename,color=None, fill=False):
     parts=filename.split(".")
     nameend = parts[-2] #-1 should be the extension
     if(color==None):
@@ -161,42 +160,33 @@ def generate_outname(filename,color=None):
             pass
         else:
             old_hexa = int(nameend[beginnum+1:beginnum+6],16)
+        if(fill and nameend[beginnum-2:beginnum]!="_f"):
+            colorcode="_f"+colorcode
         parts[-2] = parts[-2][:beginnum]+colorcode+parts[-2][beginnum+7:]
     except Exception as E:
-        parts[-2]+=colorcode
+        parts[-2]+=fill*"_f"+colorcode
     return ".".join(parts)
 
-def remove_background(filename):
+def remove_all_background(filename):
     im = Image.open(filename)
-    imrgb=im.copy().convert("RGB")
-    background_color = get_background_color(imrgb) #to not have palette ID, but an RGB value
-    #transparency = get_background_color(im) #get the palette ID if necessary
-    #NO MORE USEFUL: will be reordered frame-by-frame
     output = list()
     durations = list()
     disposals = list()
     try:
         while 1:
             if(im.mode=="P"):
-                out=reorder_background(im)
-                #im.copy() #[TODO]: put the "background" color at the same index for all frames
-                #out = set_background(im,background_color,set_transparent=True) #This would be useless as only the index is taken in account when saving
-                #Re-indexing the colors with "quantize" will lose the small color difference areas
+                out=reorder_background(im) #Put the background color at index 0
             else:
-                out = set_background(im,background_color,set_transparent=True) #If several frames have different backgrounds
-            #out.show()
+                #RGB mode (i presume)
+                background_color = get_background_color(im) #not a palette ID, but an RGB value
+                out = set_background(im,background_color,set_transparent=True) #If several frames have different backgrounds?
             output.append(out)
             
-            duration = im.info.get('duration', None)
-            if(duration is not None):
-                durations.append(duration)
-            disposal = im.disposal_method
-            if(disposal is not None):
-                disposals.append(disposal)
-            """if(im0.mode=="P"):
-                out=out.quantize(colors=256, method=2)
-            output.append(set_background(im,background_color).convert("P"))
-            """
+            try:
+                durations.append(im.info["duration"])
+                disposals.append(im.disposal_method)
+            except:
+                pass
             im.seek(im.tell()+1)
     except EOFError:
         pass # end of sequence
@@ -211,10 +201,114 @@ def remove_background(filename):
             output[0].save(outname,transparency=0)
         else:
             output[0].save(outname)
+
+def fill_all_background(filename,color=None,transparent=True):
+    im = Image.open(filename)
+    output = list()
+    durations = list()
+    disposals = list()
+    try:
+        while 1:
+            if(im.mode=="P"):
+                out=fill_paletted_background(im) #Put the background color at index 0
+            else:
+                out=fill_rgb_background(im)
+            output.append(out)
+            
+            try:
+                durations.append(im.info["duration"])
+                disposals.append(im.disposal_method)
+            except:
+                pass
+            im.seek(im.tell()+1)
+    except EOFError:
+        pass # end of sequence
         
+    outname = generate_outname(filename,None,True)
+    
+    if(len(output)>1):
+        output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=2, duration=durations, loop=0, transparency=0)
+    else:
+        if(output[0].mode=="P"):
+            print("Output as",outname,"transparency=",0)
+            output[0].save(outname,transparency=0)
+        else:
+            output[0].save(outname)
+
+def fill_paletted_background(image, color=None):
+    image=image.copy() #For some strange reason it reverted to original palette without this
+    
+    #Determine the filling color: unused color
+    palettedata = image.getpalette()
+    data = np.array(image)
+    uniquecolors = np.unique(data)
+    for i in range(256):
+        if(i not in uniquecolors):
+            new_bg = i
+            break
+            #Will be set at 0 later
+    
+    old_bg = get_background_color(image)
+    width,height = image.size
+    coords = list()
+    
+    for j in range(height):
+        coords.append((0,j))
+        coords.append((width-1,j))
+    for i in range(1,width-1,1):
+        coords.append((i,0))
+        coords.append((i,height-1))
+    
+    while(coords):
+        x,y = coords.pop()
+        if(0<=x<width and 0<=y<height):
+            #print("Test:",x,y,'<',data.shape) #X and Y are to call in Y,X order
+            if(data[y][x]==old_bg):
+                data[y][x]=new_bg
+                coords.append((x,y-1))
+                coords.append((x,y+1))
+                coords.append((x-1,y))
+                coords.append((x+1,y))
+                
+    result = Image.fromarray(data)
+    result.putpalette(palettedata)
+    
+    return reorder_background(result) #puts back the background color at index 0
+    
+def fill_rgb_background(image, color=None):
+    image=image.copy().convert("RGBA")
+    
+    data = np.array(image)
+    old_bg = get_background_color(image)
+    width,height = image.size
+    coords = list()
+    
+    for j in range(height):
+        coords.append((0,j))
+        coords.append((width-1,j))
+    for i in range(1,width-1,1):
+        coords.append((i,0))
+        coords.append((i,height-1))
+    
+    while(coords):
+        x,y = coords.pop()
+        if(0<=x<width and 0<=y<height):
+            #print("Test:",x,y,'<',data.shape) #X and Y are to call in Y,X order
+            if(np.array_equal(data[y][x],old_bg)):
+                data[y][x][-1]=0
+                coords.append((x,y-1))
+                coords.append((x,y+1))
+                coords.append((x-1,y))
+                coords.append((x+1,y))
+                
+    result = Image.fromarray(data)
+    
+    return result #puts back the background color at index 0
+    
 try:
     if __name__ == "__main__":
         remove = True
+        fill = False
         background_color = tuple()
         print(sys.argv[1:])
         if "--remove" in sys.argv:
@@ -224,6 +318,9 @@ try:
         if "--outline" in sys.argv:
             remove = False
             background_color = "outline"
+        if "--fill" in sys.argv:
+            fill = True
+            
         if(len(sys.argv)>1):
             
             for arg in sys.argv[1:]:
@@ -236,11 +333,15 @@ try:
                 elif arg=="--outline":
                     remove=False
                     background_color = "outline"
+                elif arg=="--fill":
+                    fill=True
                 else:
-                    if(remove):
-                        remove_background(arg)
+                    if(fill):
+                        fill_all_background(arg)
+                    elif(remove):
+                        remove_all_background(arg)
                     else:
-                        color_background(arg,background_color)
+                        color_all_background(arg,background_color)
         else:
             input("Error. Pass an image")
         #input("Done")
