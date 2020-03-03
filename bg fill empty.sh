@@ -9,4 +9,4 @@ cd "$PARAM_FOLDER"
 echo python "$PYSCRIPTPATH" "$@" --fill
 python "$PYSCRIPTPATH" "$@" --fill
 )
-exec $SHELL
+|| exec $SHELL

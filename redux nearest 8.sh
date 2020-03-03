@@ -21,4 +21,4 @@ done
 #echo "File" "$FILE" "$THISFILE"
 #done
 )# || read  -n 1 -p "Failed. Press enter." mainmenuinput ;
-exec $SHELL
+|| exec $SHELL
