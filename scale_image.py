@@ -49,11 +49,21 @@ def scale_file(filename,zoom,mode="mode"):
         zoom=-1/zoom
     name,extension = os.path.splitext(filename)
     output = list()
+    
+    durations = list()
+    disposals = list()
     #print(im.tell())
     try:
         while 1:
             w,h = im.size
             w,h=int(round(w*zoom)),int(round(h*zoom))
+            
+            duration = im.info.get('duration', None)
+            if(duration is not None):
+                durations.append(duration)
+            disposal = im.disposal_method
+            if(disposal is not None):
+                disposals.append(disposal)
             #print(w,h)
             #print(mode)
             if(zoom>=1 or mode=="nearest"):
@@ -64,7 +74,6 @@ def scale_file(filename,zoom,mode="mode"):
             
             
             im.seek(im.tell()+1)
-            duration = im.info['duration']
             #print(im.tell())
             # do something to im
     except EOFError:
@@ -82,14 +91,21 @@ def scale_file(filename,zoom,mode="mode"):
         zoomtext = "_X"+str(zoom)
     outname = name+zoomtext+extension
     print(outname, file=sys.stdout)
+    #Default: disposal=2
+    print(len(output),len(durations),len(disposals))
+    print(durations)
+    print(disposals)
     if(len(output)>1):
         if(transparency!=None):
-            output[0].save(outname, save_all=True,append_images=output[1:], optimize=True, disposal=2, transparency=transparency, duration=duration, loop=0)
+            output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=disposals, transparency=transparency, duration=durations, loop=0)
         else:
-            output[0].save(outname, save_all=True,append_images=output[1:], optimize=True, disposal=2, duration=duration, loop=0)
+            output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=disposals, duration=durations, loop=0)
     
     else:
-        output[0].save(outname)
+        if(transparency!=None):
+            output[0].save(outname, transparency=transparency)
+        else:
+            output[0].save(outname)
         
 def is_float(value):
     try:
@@ -130,3 +146,4 @@ if __name__ == "__main__":
             exit("Please provide a file!")
     else:
         input("Usage: python scalevalueFLOAT Negative filetoscalePNG/GIF \nvalues will scale to 1/value rather than flipping\nmultiple values and files accepted in-order")
+        
