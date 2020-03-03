@@ -100,10 +100,20 @@ def reset_transparency(paletteimage,mask,transparency=255):
     
 def create_gif_from_folder(foldername,outputname=None,palette=None):
     images = list()
+    durations = list()
+    previous_time = 0
     for file in os.listdir(foldername):
         if file.endswith(".png"):
             im = Image.open(foldername+os.sep+file)
             
+                
+            try:
+                time = int(foldername.split(".")[-1])
+                if(time!=0):
+                    durations.append(max(time-previous_time,20))
+            except:
+                pass
+                
             im2, mask=deal_transparency(im)
             im2=im2.convert("RGB")
             palette=remove_unused_color_from_palette(palette)
@@ -111,32 +121,47 @@ def create_gif_from_folder(foldername,outputname=None,palette=None):
             if not(mask is None):
                 im2=reset_transparency(im2,mask)
             images.append(im2)
-
+    
+    durations+=[20]*(len(images)-len(durations))
     for im in images:
         im.info['transparency']=None
         del im.info['transparency']
-    images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=False, transparency=255, disposal=2, duration=30, loop=0) 
+    print(len(images),len(durations))
+    print(durations)
+    images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=False, transparency=255, disposal=2, duration=durations, loop=0) 
 
 def create_gif_from_gif(filename,outputname=None,palette=None):
     images = list()
     im = Image.open(filename)
-    duration = 30
+    
+    durations = list()
+    disposals = list()
     try:
         while 1:
             im2=im.convert("RGB")
             images.append(index_image(im2,palette))
+            duration = im.info.get('duration', None)
+            
+            if(duration is not None):
+                durations.append(duration)
+            disposal = im.disposal_method
+            if(disposal is not None):
+                disposals.append(disposal)
+                
             im.seek(im.tell()+1)
-            duration = im.info['duration']
     except EOFError:
         pass # end of sequence
     try:
-        images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=False, disposal=2, duration=duration, loop=0)
+        images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=False, disposal=disposals, duration=durations, loop=0)
     except:
+        transparency = None
         for im in images:
-            im.info['transparency']=None
+            
+            if(im.info.get('transparency',None) is not None):
+                transparency = im.info['transparency']
             del im.info['transparency']
             #Transparency has to be deleted because of a bug in PIL. Restore it with change_background.py
-        images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=False, disposal=2, duration=duration, loop=0)
+        images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=False, disposal=disposals, transparency=transparency, duration=durations, loop=0)
         
 try:
     if __name__ == "__main__":
@@ -169,7 +194,7 @@ except Exception as E:
     traceback.print_exc()
     input("Failure")
     
-#input("wait")
+input("wait")
     
 """def load_palette(filename):
     im = Image.open(filename)
