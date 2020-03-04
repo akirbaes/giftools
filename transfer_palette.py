@@ -74,6 +74,8 @@ def deal_transparency(image):
     image=image.copy()
     data = np.array(image)
     # print(data)
+    print(image.mode)
+    print(data[0][0])
     alpha = data[:,:,3:]
     #print(np.unique(alpha))
     alpha[alpha<=alpha_limit]=0
@@ -190,12 +192,21 @@ def create_gif_from_folder(foldername,outputname=None,palette=None):
             except:
                 pass
                 
-            im2, mask=deal_transparency(im)
-            im2=im2.convert("RGB")
+            if(im.mode=="RGB" or im.mode=="RGBA"):
+                im2, mask=deal_transparency(im)
+                im2=im.convert("RGB")
+            elif(im.mode=="P"):
+                mask = get_palette_transparency_area(im)
+                im2=im.convert("RGB")
+            else:
+                print("Unhandled image mode:",im.mode)
+                
             #palette=remove_unused_color_from_palette(palette) #this actually ends up mangling the colors
             im2 = index_image(im2,palette)
+            tr=unused_color(im2)
             if not(mask is None):
-                im2=reset_transparency(im2,mask)
+                im2=reset_transparency(im2,mask,tr)
+                im2=swap_palette_colors(im2,tr,0)
             images.append(im2)
     
     durations+=[20]*(len(images)-len(durations))
@@ -204,7 +215,7 @@ def create_gif_from_folder(foldername,outputname=None,palette=None):
         del im.info['transparency']
     print(len(images),len(durations))
     print(durations)
-    images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=False, transparency=255, disposal=2, duration=durations, loop=0) 
+    images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=False, transparency=0, disposal=2, duration=durations, loop=0) 
 
 def create_gif_from_image(filename,outputname=None,palette=None):
     im = Image.open(filename)
