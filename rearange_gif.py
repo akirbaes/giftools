@@ -14,7 +14,7 @@ def rearange(filename,w1,h1,w2,h2):
     height2 = int(height/h1*h2)
     cellwidth = int(width/w1)
     cellheight = int(height/h1)
-    duration = image.info['duration']
+    durations = list()
     transparency = image.info.get('transparency',None)
     
     print("Image",width,"x",height)
@@ -33,19 +33,30 @@ def rearange(filename,w1,h1,w2,h2):
                     res.paste(image.copy().crop((x,y,x+cellwidth,y+cellheight)),(x2,y2))
                     
             results.append(res)
+            
+            
+            duration = image.info.get('duration',None)
+            if(duration!=None): durations.append(duration)
+            
             image.seek(image.tell()+1)
     except EOFError:
         pass # end of sequence
         
     folder = os.path.dirname(filename)
-    name = os.path.splitext(os.path.basename(filename))[0]
-    outputname = folder+os.sep+name+" "+str(w2)+"x"+str(h2)+".gif"
-    outputname = filename+" "+str(w2)+"x"+str(h2)+".gif"
+    name, ext = os.path.splitext(os.path.basename(filename))
+    outputname = folder+os.sep+name+" "+str(w2)+"x"+str(h2)+ext
+    #outputname = filename+" "+str(w2)+"x"+str(h2)+ext
     print(outputname)
-    if(transparency!=None):
-        results[0].save(outputname, "GIF", save_all=True,append_images=results[1:], optimize=False, disposal=2, duration=duration, transparency=transparency, loop=0)
+    if(len(results)>1):
+        if(transparency!=None):
+            results[0].save(outputname, "GIF", save_all=True,append_images=results[1:], optimize=False, disposal=2, duration=durations, transparency=transparency, loop=0)
+        else:
+            results[0].save(outputname, "GIF", save_all=True,append_images=results[1:], optimize=False, disposal=2, duration=durations, loop=0)
     else:
-        results[0].save(outputname, "GIF", save_all=True,append_images=results[1:], optimize=False, disposal=2, duration=duration, loop=0)
+        if(transparency!=None):
+            results[0].save(outputname, transparency=transparency)
+        else:
+            results[0].save(outputname)
         
 try:
     if __name__ == "__main__":
