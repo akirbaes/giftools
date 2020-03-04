@@ -154,4 +154,12 @@ Legacy format for a game called Fantasy Online where players could participate i
     
 ![Starting PolarBear spritesheet](Examples/PolarBear.png) → ![Rearanged PolarBear_A gif](Examples/PolarBear_A.gif)
 
-    
+## Debugger: `_unoptimize_gif.sh`, `_optimize_gif.sh`
+
+Will call gifsicle with the right parameters.
+
+Often, when there is an optimisation bug for a gif, you'll want to unoptimise it (and maybe set its background to a solid color).
+
+It will happen often with PIL.
+
+> You can drop several files on those scripts.
