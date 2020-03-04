@@ -27,6 +27,8 @@ Add gifsicle's folder to your PATH
 
 >https://www.architectryan.com/2018/03/17/add-to-the-path-on-windows-10/
 
+Download this repository (Clone or download → Download zip) and put it somewhere (unzip it). Open the folder and keep it around so that you can drag-and-drop images onto the scripts.
+
 # Scripts and functionalities
 
 *Most of the scripts work with simply drag-and-dropping one or several files on them.*
