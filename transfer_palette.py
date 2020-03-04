@@ -3,6 +3,7 @@ import os.path
 import os
 import numpy as np 
 alpha_limit = 130
+from statistics import mode
 #Transfers one image's palette to another.
 #Usage: python transfer_palette.py sourceImage targetImage
 #target can be a folder full of pngs. It will compile them into a gif.
@@ -12,8 +13,6 @@ alpha_limit = 130
 def index_image(image,palette=None):
     #print(palette.mode)
     return image.quantize(colors=256, method=2, kmeans=0, palette=palette, dither=0)
-
-
 
 def remove_unused_color_from_palette(image):
     #Will also mess up the image, but no care for it for now
@@ -83,12 +82,40 @@ def deal_transparency(image):
     #print(np.unique(alphaonly))
     #mask = None#Image.fromarray(alphaonly)
     return result, alphaonly
+
+def unused_color(image):
+    data = np.array(image)
+    uniquecolors = set(np.unique(data))
+    print(uniquecolors)
+    for i in range(256):
+        if(i not in uniquecolors):
+            # print("Unused color:",i)
+            # input()
+            return i
+    return None
+
+def get_palette_transparency_area(image):
+    image=image.copy()
+    tr = image.info.get("transparency",None)
+    
+    data = np.array(image)
+    if(tr==0):
+        data[data!=tr]=1
+    else:
+        data[data!=tr]=0
+        data[data==tr]=2
+        data[data==0]=1
+        data[data==2]=0
+    # print("Transparency mask:",data)
+    return data
     
 def reset_transparency(paletteimage,mask,transparency=255):
     # print("Paletteimage mode:",paletteimage.mode)
     data = np.array(paletteimage)
     # print(data[0,0])
     # print(mask[0,0])
+    # print("Data:",data)
+    # print("Mask:",mask)
     data = data*mask
     mask = -(mask-1)*transparency
     data = data+mask
@@ -96,6 +123,52 @@ def reset_transparency(paletteimage,mask,transparency=255):
     # print("Result mode",result.mode)
     result.putpalette(paletteimage.getpalette())
     result.info["transparency"]=transparency
+    return result
+    
+
+def swap_palette_colors(image, source_id=None, target_id = 0):
+    #Puts the source_id color at index target_id
+    image=image.copy()
+    palettedata = image.getpalette()
+    if(source_id==None):
+        source_id = get_background_color(image) #must be a palette ID
+    else:
+        source_id = source_id
+    
+    source_index = source_id*3
+    target_index = target_id*3
+    
+    target_color = palettedata[target_index:target_index+3]
+    source_color = palettedata[source_index:source_index+3]
+    
+    palettedata[target_index:target_index+3] = source_color
+    palettedata[source_index:source_index+3] = target_color
+    
+    if(source_id==target_id):
+        return image
+    data = np.array(image)
+    area_source = data.copy()
+    area_target = data.copy()
+    
+    intermediate = (source_id+1+(target_id==source_id+1))%256
+    
+    #if(source_id!=0):
+    area_source[area_source!=source_id]=intermediate
+    area_source[area_source==source_id]=target_id
+    area_source[area_source==intermediate]=0
+        
+    area_target[area_target!=target_id]=intermediate
+    area_target[area_target==target_id]=source_id
+    area_target[area_target==intermediate]=0
+    
+    
+    data[data==source_id]=0
+    data[data==target_id]=0
+    data+=area_source+area_target
+    
+    result = Image.fromarray(data)
+    result.putpalette(palettedata)
+    
     return result
     
 def create_gif_from_folder(foldername,outputname=None,palette=None):
@@ -139,13 +212,17 @@ def create_gif_from_image(filename,outputname=None,palette=None):
     transparency = list()
     try:
         while 1:
-            im2=im.convert("RGB") #before that, save the mask  of the transparent areas [TODO]
-            images.append(index_image(im2,palette))
+            mask = get_palette_transparency_area(im)
+            palette=remove_unused_color_from_palette(palette)
+            im2=index_image(im.convert("RGB"),palette)
+            tr=unused_color(im2)
+            im2=reset_transparency(im2, mask,tr)
+            im2=swap_palette_colors(im2,tr,0)
+            images.append(im2)
             
             try:
-                transparency=im.info.get('transparency',transparency)
-                print("tp",transparency)
-                
+                #transparency.append(im.info.get('transparency',transparency))
+                #print("tp",transparency)
                 durations.append(im.info["duration"])
                 disposals.append(im.disposal_method)
                 # del im.info["transparency"]
@@ -160,14 +237,14 @@ def create_gif_from_image(filename,outputname=None,palette=None):
     
     if(len(images)>1):
         print(transparency)
-        if(len(transparency)!=0):
-            transparency=get_background_color(image[0]) #or rather, use the mask created earlier
-        images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=False, disposal=disposals, duration=durations, transparency=transparency, loop=0)
+        #if(len(transparency)!=0):
+        #    transparency=get_background_color(images[0]) #or rather, use the mask created earlier
+        images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=False, disposal=disposals, duration=durations, transparency=0, loop=0)
     else:
-        if(len(transparency)!=0 and transparency[0]!=None):
-            images[0].save(outputname, "GIF", optimize=False, transparency=transparency[0])
-        else:
-            images[0].save(outputname, "GIF", optimize=False)
+        #if(len(transparency)!=0 and transparency[0]!=None):
+        images[0].save(outputname, "GIF", optimize=False, transparency=0)
+        # else:
+            # images[0].save(outputname, "GIF", optimize=False)
         
 try:
     if __name__ == "__main__":
