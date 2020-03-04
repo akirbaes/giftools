@@ -14,13 +14,17 @@ do
     python "$PYSCRIPTPATH"transfer_palette.py "$FILE" "$PARENTFOLDER""/""$NAME""/interpolated_frames"
     mv "$NAME"_EXT_interpolated_frames.gif    "$NAME"_interp.gif
     bash "$PYSCRIPTPATH"_unoptimize_gif.sh    "$NAME"_interp.gif
+    bash "$PYSCRIPTPATH""bg empty.sh"         "$NAME"_interp.gif
+    mv  "$NAME""_interp#_empty.gif"           "$NAME"_interp.gif
+    #bash "$PYSCRIPTPATH"_unoptimize_gif.sh    "$NAME"_interp.gif
     bash "$PYSCRIPTPATH""redux nearest 4.sh"  "$NAME"_interp.gif
+    #bash "$PYSCRIPTPATH"_unoptimize_gif.sh    "$NAME"_interp_N4.gif
     bash "$PYSCRIPTPATH""resample X4.sh"      "$NAME"_interp_N4.gif
-    bash "$PYSCRIPTPATH"_unoptimize_gif.sh    "$NAME"_interp_N4.gif
+    bash "$PYSCRIPTPATH"_unoptimize_gif.sh    "$NAME"_interp_N4_X4.gif
     
     mv                                        "$NAME"_interp.gif        "$NAME""(interp).gif"
-    mv                                        "$NAME"_interp_N4.gif     "$NAME""_interp(small).gif"
-    mv                                        "$NAME"_interp_N4_X4.gif  "$NAME""_interp(big).gif"
+    #mv                                        "$NAME"_interp_N4.gif     "$NAME""_interp(small).gif"
+    #mv                                        "$NAME"_interp_N4_X4.gif  "$NAME""_interp(big).gif"
     
 done
 )
