@@ -19,11 +19,14 @@ def get_outline_color(image):
 def get_background_color(image):
     return mode((image.getpixel((0,0)),image.getpixel((-1,0)),image.getpixel((0,-1)),image.getpixel((-1,-1))))
 
-def reorder_background(image):
+def reorder_background(image, background=None):
     #Puts the background color at index 0
     image=image.copy()
     palettedata = image.getpalette()
-    background_id = get_background_color(image) #must be a palette ID
+    if(background==None):
+        background_id = get_background_color(image) #must be a palette ID
+    else:
+        background_id = background
     
     bg_index = background_id*3
     zero_index = 0
@@ -142,7 +145,7 @@ def color_all_background(filename, background_color):
     
     outname = generate_outname(filename,background_color)
     if(len(output)>1):
-        output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=disposals, duration=durations, loop=0)
+        output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=2, duration=durations, loop=0)
     else:
         output[0].save(outname)
 
@@ -194,7 +197,7 @@ def remove_all_background(filename):
     outname = generate_outname(filename,None)
     
     if(len(output)>1):
-        output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=disposals, duration=durations, loop=0, transparency=0)
+        output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=2, duration=durations, loop=0, transparency=0)
     else:
         if(output[0].mode=="P"):
             print("Output as",outname,"transparency=",0)
