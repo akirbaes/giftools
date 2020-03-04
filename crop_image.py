@@ -87,7 +87,7 @@ def crop_image(filename,outlines=0,crop=True):
             if(disposal is not None):
                 disposals.append(disposal)
             output.append(out)
-            
+            #out.show()
             im.seek(im.tell()+1)
     except EOFError:
         pass # end of sequence
@@ -95,9 +95,9 @@ def crop_image(filename,outlines=0,crop=True):
     outname = generate_outname(filename,crop,outlines)
     if(len(output)>1):
         if(transparency!=None):
-            output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=disposals, transparency=transparency, duration=durations, loop=0)
+            output[0].save(outname, save_all=True,append_images=output[1:], transparency=transparency, duration=durations, loop=0)
         else:
-            output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=disposals, duration=durations, loop=0)
+            output[0].save(outname, save_all=True,append_images=output[1:], duration=durations, loop=0)
             
     else:
         if(transparency!=None):
