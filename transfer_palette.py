@@ -181,7 +181,7 @@ def create_gif_from_folder(foldername,outputname=None,palette=None):
     if(palette!=None):
         palette=remove_unused_color_from_palette(palette) #this actually ends up mangling the colors, so only do it once
     for file in os.listdir(foldername):
-        if file.endswith(".png"):
+        if file.endswith(".png") or file.endswith(".gif"):
             im = Image.open(foldername+os.sep+file)
             
                 
