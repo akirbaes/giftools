@@ -176,6 +176,8 @@ def create_gif_from_folder(foldername,outputname=None,palette=None):
     images = list()
     durations = list()
     previous_time = 0
+    if(palette!=None):
+        palette=remove_unused_color_from_palette(palette) #this actually ends up mangling the colors, so only do it once
     for file in os.listdir(foldername):
         if file.endswith(".png"):
             im = Image.open(foldername+os.sep+file)
@@ -190,7 +192,7 @@ def create_gif_from_folder(foldername,outputname=None,palette=None):
                 
             im2, mask=deal_transparency(im)
             im2=im2.convert("RGB")
-            palette=remove_unused_color_from_palette(palette)
+            #palette=remove_unused_color_from_palette(palette) #this actually ends up mangling the colors
             im2 = index_image(im2,palette)
             if not(mask is None):
                 im2=reset_transparency(im2,mask)
@@ -207,6 +209,8 @@ def create_gif_from_folder(foldername,outputname=None,palette=None):
 def create_gif_from_image(filename,outputname=None,palette=None):
     im = Image.open(filename)
     
+    if(palette!=None):
+        palette=remove_unused_color_from_palette(palette) #this actually ends up mangling the colors, so only do it once
     images = list()
     durations = list()
     disposals = list()
@@ -217,7 +221,7 @@ def create_gif_from_image(filename,outputname=None,palette=None):
                 mask = get_palette_transparency_area(im)
             else:
                 im, mask = deal_transparency(im)
-            palette=remove_unused_color_from_palette(palette)
+            # palette=remove_unused_color_from_palette(palette)
             im2=index_image(im.convert("RGB"),palette)
             tr=unused_color(im2)
             # print("Mode:",im.mode)
