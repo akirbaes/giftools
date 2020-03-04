@@ -105,6 +105,24 @@ Calling `change_background.py r g b filename`
 
 > You can drag-and drop multiple files on those scripts.
 
+## Crop/outline: `crop_image.py`
+
+    bordline_1.sh pendulum.gif
+    
+![Pendulum](Examples/pendulum.gif) → ![Pendulum with outline](Examples/pendulum+1.gif)
+
+    bordcrop_0.sh pendulum.gif
+    
+![Pendulum](Examples/pendulum.gif) → ![Pendulum cropped](Examples/pendulum+c0.gif)
+
+    bordcrop_1.sh pendulum.gif
+    
+![Pendulum](Examples/pendulum.gif) → ![Pendulum cropped](Examples/pendulum+c1.gif)
+
+> You can drag-and drop multiple files on those scripts.
+
+> You can change the number in the name to change the border size.
+
 ## Gif timing changer: `RETIME miliseconds.sh`
 
     RETIME 20.sh EarthPrincess.gif

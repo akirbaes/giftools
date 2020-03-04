@@ -14,7 +14,7 @@ def rindex(lst, value):
             return len(lst) - i - 1  # return the index in the original list
     return None    
     
-def generate_outname(filename,crop,outlines):
+def generate_outname(filename,crop,borders):
     name,ext = os.path.splitext(filename)
     if("+" in name):
         plus = name.rindex("+")
@@ -32,14 +32,14 @@ def generate_outname(filename,crop,outlines):
         if(numbers):
             if(not crop):
                 #Add more
-                outlines += int(name[plus+c+1:plus+c+numbers+1])
+                borders += int(name[plus+c+1:plus+c+numbers+1])
             crop = crop or c
-            insertion = "+"+crop*"c"+str(outlines)
+            insertion = "+"+crop*"c"+str(borders)
             return name[:plus]+insertion+name[plus+c+numbers+1:]+ext
-    insertion = "+"+crop*"c"+str(outlines)
+    insertion = "+"+crop*"c"+str(borders)
     return name+insertion+ext
 
-def crop_image(filename,outlines=0,crop=True):
+def crop_image(filename,borders=0,crop=True):
     im = Image.open(filename)
     width,height=im.size
     if(crop):
@@ -53,18 +53,17 @@ def crop_image(filename,outlines=0,crop=True):
                     for y in range(height):
                         if(data[y][x]!=bg):
                             left = min(left,x)
-                            right = max(right,x)
+                            right = max(right,x+1)
                             top = min(top,y)
-                            bottom = max(bottom,y)
+                            bottom = max(bottom,y+1)
                 im.seek(im.tell()+1)
         except EOFError:
             pass # end of sequence
         im = Image.open(filename)
     else:
         left,top,right,bottom = 0,0,width,height
-        
-    new_width = right-left+outlines*2
-    new_height = bottom-top+outlines*2
+    new_width = right-left+borders*2
+    new_height = bottom-top+borders*2
     output = list()
     transparency = None
     transparencies = list()
@@ -76,7 +75,7 @@ def crop_image(filename,outlines=0,crop=True):
             out = im.copy()
             out = out.resize((new_width,new_height),resample=Image.NEAREST)
             out.paste(bg,(0,0,new_width,new_height))
-            out.paste(im,(-left+outlines,-top+outlines))
+            out.paste(im,(-left+borders,-top+borders))
             
             transparency = im.info.get('transparency', transparency)
             transparencies.append(im.info.get('transparency', None))
@@ -92,7 +91,7 @@ def crop_image(filename,outlines=0,crop=True):
     except EOFError:
         pass # end of sequence
     print(transparencies)
-    outname = generate_outname(filename,crop,outlines)
+    outname = generate_outname(filename,crop,borders)
     if(len(output)>1):
         if(transparency!=None):
             output[0].save(outname, save_all=True,append_images=output[1:], transparency=transparency, duration=durations, loop=0)
@@ -109,21 +108,21 @@ if __name__ == "__main__":
     import sys
     if(len(sys.argv)>1):
         file = None
-        outline = 1
+        border = 1
         crop=False
         
         files = list()
         for arg in sys.argv[1:]:
             if(arg.isnumeric()):
-                outline = int(arg)
+                border = int(arg)
             elif(arg=="--crop"):
                 crop=True
             else:
                 files.append(arg)
         for file in files:
-            crop_image(file,outline,crop)
+            crop_image(file,border,crop)
         if not files:
             exit("Please provide a file!")
     else:
-        input("Usage: python crop_image.py [int:outline] [--crop] files")
+        input("Usage: python crop_image.py [int:border] [--crop] files")
         
