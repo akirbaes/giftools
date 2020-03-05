@@ -90,11 +90,11 @@ def scale_file(filename,zoom,mode="mode"):
             zoom = int(zoom)
         zoomtext = "_X"+str(zoom)
     outname = name+zoomtext+extension
-    print(outname, file=sys.stdout)
+    #print(outname, file=sys.stdout)
     #Default: disposal=2
-    print(len(output),len(durations),len(disposals))
-    print(durations)
-    print(disposals)
+    #print(len(output),len(durations),len(disposals))
+    #print(durations)
+    #print(disposals)
     if(len(output)>1):
         if(transparency!=None):
             output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=disposals, transparency=transparency, duration=durations, loop=0)
