@@ -1,6 +1,7 @@
 THISFILE=`basename "$0"`
 PYSCRIPTPATH="${0%\\*}\\" #If the .sh script is somewhere else, put the absolute path instead
-PARAM_FOLDER="${1%\\*}" #Local to the image (for creating new ones)
+PARAM_FOLDER=$(dirname -- "$1")
+#PARAM_FOLDER="${1%\\*}" #The python script will be local to the image (for creating new ones)
 cd "$PARAM_FOLDER"
 python -V
 (
@@ -21,10 +22,12 @@ do
     ###bash "$PYSCRIPTPATH"_unoptimize_gif.sh    "$NAME"_interp_N4.gif
     bash "$PYSCRIPTPATH""resample X4.sh"      "$NAME"_interp_N4.gif
     bash "$PYSCRIPTPATH"_unoptimize_gif.sh    "$NAME"_interp_N4_X4.gif
-    
-    mv                                        "$NAME"_interp.gif        "$NAME""(interp).gif"
-    #mv                                        "$NAME"_interp_N4.gif     "$NAME""_interp(small).gif"
-    #mv                                        "$NAME"_interp_N4_X4.gif  "$NAME""_interp(big).gif"
+    (
+    mkdir output_N4
+    )
+    mv                                        "$NAME"_interp.gif        output_N4/"$NAME""(interp).gif"
+    mv                                        "$NAME"_interp_N4.gif     output_N4/"$NAME""_interp_N4.gif"
+    mv                                        "$NAME"_interp_N4_X4.gif  output_N4/"$NAME""_interp_N4_X4.gif"
     
 done
 )

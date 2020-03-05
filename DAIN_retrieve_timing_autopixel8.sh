@@ -21,10 +21,12 @@ do
     ###bash "$PYSCRIPTPATH"_unoptimize_gif.sh    "$NAME"_interp_N4.gif
     bash "$PYSCRIPTPATH""resample X4.sh"      "$NAME"_interp_N8.gif
     bash "$PYSCRIPTPATH"_unoptimize_gif.sh    "$NAME"_interp_N8_X4.gif
-    
-    mv                                        "$NAME"_interp.gif        "$NAME""(interp).gif"
-    #mv                                        "$NAME"_interp_N8.gif     "$NAME""_interp(small).gif"
-    #mv                                        "$NAME"_interp_N8_X4.gif  "$NAME""_interp(big).gif"
+    (
+    mkdir output_N8
+    )
+    mv                                        "$NAME"_interp.gif        output_N8/"$NAME""(interp).gif"
+    mv                                        "$NAME"_interp_N8.gif     output_N8/"$NAME""_interp(small).gif"
+    mv                                        "$NAME"_interp_N8_X4.gif  output_N8/"$NAME""_interp(x4).gif"
     
 done
 )

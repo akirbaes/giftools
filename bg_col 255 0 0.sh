@@ -4,7 +4,8 @@ PYSCRIPTPATH="${0%\\*}\\change_background.py" #if the .sh script is somewhere el
 #cd "${0%\\*}"
 echo COl : $COLORS
 echo ALL : $@
-PARAM_FOLDER="${1%\\*}" #The python script will be local to the image (for creating new ones)
+PARAM_FOLDER=$(dirname -- "$1")
+#PARAM_FOLDER="${1%\\*}" #The python script will be local to the image (for creating new ones)
 cd "$PARAM_FOLDER"
 (
 bash "${0%\\*}\\_unoptimize_gif.sh" "$@"
