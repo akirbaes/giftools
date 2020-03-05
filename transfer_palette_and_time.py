@@ -195,15 +195,15 @@ def transfer_durations(source,images):
         #print(imindex)
         #output.append(images[imindex])
         imposs = duration/max_multiplier
-        if(imposs>40):    
+        if(imposs>30):    
             #First long frame, then slow move
             indexes.append("Long first")
             for i in range(max_multiplier):
                 indexes.append(imindex+i)
                 output.append(images[imindex+i])
-            start = duration-max_multiplier*40
+            start = duration-max_multiplier*20
             for i in range(max_multiplier):
-                output_durations.append(40+start)
+                output_durations.append(20+start)
                 start=0
         elif(imposs>=20):
             #Taper out
@@ -218,7 +218,7 @@ def transfer_durations(source,images):
             indexes.append("Cut short")
             max_interpolation = duration/20
             #only allow powers of 2
-            max_interpolation = max(1,int(2**int(log(max_interpolation)/log(2))))
+            max_interpolation = max(2,int(2**int(log(max_interpolation)/log(2))))
             for i in range(max_interpolation):
                 try:
                     finalindex = int(imindex+i*(max_multiplier/max_interpolation))
@@ -232,11 +232,10 @@ def transfer_durations(source,images):
                     print("Current i in max_interpolation",i)
                     print("Current index in image:",finalindex)
                     print("images:",len(images))
-                    input()
                     raise e
             for i in range(max_interpolation):
                 output_durations.append(max(20,int(round(duration/max_interpolation)))) #Should be round /10 *10 maybe
-    #print(indexes)
+    print(indexes)
     return output,output_durations
                 
 def create_gif_from_folder(source,foldername,outputname=None,palette=None):
@@ -365,7 +364,6 @@ except Exception as E:
     import traceback
     traceback.print_exc()
     input("Failure")
-    
 """def load_palette(filename):
     im = Image.open(filename)
     pal = im.getpalette()
