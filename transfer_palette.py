@@ -261,7 +261,7 @@ def create_gif_from_image(filename,outputname=None,palette=None):
         print(transparency)
         #if(len(transparency)!=0):
         #    transparency=get_background_color(images[0]) #or rather, use the mask created earlier
-        images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=False, disposal=disposals, duration=durations, transparency=0, loop=0)
+        images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=False, duration=durations, transparency=0, loop=0)
     else:
         #if(len(transparency)!=0 and transparency[0]!=None):
         images[0].save(outputname, "GIF", optimize=False, transparency=0)
