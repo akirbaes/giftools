@@ -11,11 +11,11 @@ do
     EXTENSION="${FULLNAME##*.}"
     PARENTFOLDER=$(dirname -- "$FILE")
     echo python "$PYSCRIPTPATH"transfer_palette_and_time.py "$FILE" "$PARENTFOLDER""/""$NAME""/interpolated_frames"
-    python "$PYSCRIPTPATH"transfer_palette.py "$FILE" "$PARENTFOLDER""/""$NAME""/interpolated_frames"
+    python "$PYSCRIPTPATH"transfer_palette_and_time.py "$FILE" "$PARENTFOLDER""/""$NAME""/interpolated_frames"
     mv "$NAME"_EXT_interpolated_frames.gif    "$NAME"_interp.gif
     #bash "$PYSCRIPTPATH"_unoptimize_gif.sh    "$NAME"_interp.gif
-    bash "$PYSCRIPTPATH""bg empty.sh"         "$NAME"_interp.gif
-    mv  "$NAME""_interp#_empty.gif"           "$NAME"_interp.gif
+    #bash "$PYSCRIPTPATH""bg empty.sh"         "$NAME"_interp.gif
+    #mv  "$NAME""_interp#_empty.gif"           "$NAME"_interp.gif
     ###bash "$PYSCRIPTPATH"_unoptimize_gif.sh    "$NAME"_interp.gif
     bash "$PYSCRIPTPATH""redux nearest 8.sh"  "$NAME"_interp.gif
     ###bash "$PYSCRIPTPATH"_unoptimize_gif.sh    "$NAME"_interp_N4.gif
