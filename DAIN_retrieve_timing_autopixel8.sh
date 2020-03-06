@@ -8,19 +8,14 @@ for FILE in "$@"
 do
     FULLNAME=$(basename -- "$FILE")
     NAME="${FULLNAME%.*}"
-    EXTENSION="${FULLNAME##*.}"
+    #EXTENSION="${FULLNAME##*.}"
     PARENTFOLDER=$(dirname -- "$FILE")
-    echo python "$PYSCRIPTPATH"transfer_palette_and_time.py "$FILE" "$PARENTFOLDER""/""$NAME""/interpolated_frames"
+    echo Transferring pallet and duration approximations
     python "$PYSCRIPTPATH"transfer_palette_and_time.py "$FILE" "$PARENTFOLDER""/""$NAME""/interpolated_frames"
     mv "$NAME"_EXT_interpolated_frames.gif    "$NAME"_interp.gif
-    #bash "$PYSCRIPTPATH"_unoptimize_gif.sh    "$NAME"_interp.gif
-    #bash "$PYSCRIPTPATH""bg empty.sh"         "$NAME"_interp.gif
-    #mv  "$NAME""_interp#_empty.gif"           "$NAME"_interp.gif
-    ###bash "$PYSCRIPTPATH"_unoptimize_gif.sh    "$NAME"_interp.gif
+    echo Pixelating result...
     bash "$PYSCRIPTPATH""redux nearest 8.sh"  "$NAME"_interp.gif
-    ###bash "$PYSCRIPTPATH"_unoptimize_gif.sh    "$NAME"_interp_N4.gif
     bash "$PYSCRIPTPATH""resample X4.sh"      "$NAME"_interp_N8.gif
-    bash "$PYSCRIPTPATH"_unoptimize_gif.sh    "$NAME"_interp_N8_X4.gif
     (
     mkdir output_N8
     )
