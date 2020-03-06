@@ -125,13 +125,20 @@ Calling `change_background.py r g b filename`
 
 ## Gif timing changer: `RETIME miliseconds.sh`
 
+> You can drag-and drop multiple files on those scripts.
+
     RETIME 20.sh EarthPrincess.gif
     
 ![Regular speed Earth Pricess aura.gif](Examples/EarthPrincess.gif) → ![Superspeed Earth Pricess aura.gif](Examples/EarthPrincessFast.gif) 
 
-> You can drag-and drop multiple files on those scripts.
-
 > You can copy and rename the RETIME files to change the duration they apply.
+
+    RETIME 2d1.sh EarthPrincess.gif
+    
+![Regular speed Earth Pricess aura.gif](Examples/EarthPrincess.gif) → ![Twice slower Earth Pricess aura.gif](Examples/EarthPrincessT320.gif) 
+
+> You can copy and rename the RETIME files to change the fraction that is multiplied to the existing durations.
+
 
 ## Stacker: `STACK_gifs.py`, `STACK-V gifs.sh`
 
