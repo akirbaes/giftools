@@ -94,9 +94,9 @@ def crop_image(filename,borders=0,crop=True):
     outname = generate_outname(filename,crop,borders)
     if(len(output)>1):
         if(transparency!=None):
-            output[0].save(outname, save_all=True,append_images=output[1:], transparency=transparency, duration=durations, loop=0)
+            output[0].save(outname, save_all=True,append_images=output[1:], disposal=2, transparency=transparency, duration=durations, loop=0)
         else:
-            output[0].save(outname, save_all=True,append_images=output[1:], duration=durations, loop=0)
+            output[0].save(outname, save_all=True,append_images=output[1:], disposal=2, duration=durations, loop=0)
             
     else:
         if(transparency!=None):
