@@ -12,8 +12,10 @@ from statistics import mode
     
 def index_image(image,palette=None):
     #print(palette.mode)
-    return image.quantize(colors=256, method=2, kmeans=0, palette=palette, dither=0)
-
+    if(palette!=None):
+        return image.quantize(colors=256, method=2, kmeans=0, palette=palette, dither=0)
+    else:
+        return image.quantize(colors=256, method=2, kmeans=0, dither=0)
 def remove_unused_color_from_palette(image):
     #Will also mess up the image, but no care for it for now
     #Gif:do it for every frame and group all the colors in one image
@@ -174,6 +176,24 @@ def swap_palette_colors(image, source_id=None, target_id = 0):
     
     return result
     
+def index_rgb_alpha(im,palette=None):       
+    if(im.mode=="RGB" or im.mode=="RGBA"):
+        im2, mask=deal_transparency(im)
+        im2=im.convert("RGB")
+    elif(im.mode=="P"):
+        mask = get_palette_transparency_area(im)
+        im2=im.convert("RGB")
+    else:
+        print("Unhandled image mode:",im.mode)
+        
+    #palette=remove_unused_color_from_palette(palette) #this actually ends up mangling the colors
+    im2 = index_image(im2,palette)
+    tr=unused_color(im2)
+    if not(mask is None):
+        im2=reset_transparency(im2,mask,tr)
+        im2=swap_palette_colors(im2,tr,0)
+    return im2
+    
 def create_gif_from_folder(foldername,outputname=None,palette=None):
     images = list()
     durations = list()
@@ -191,23 +211,7 @@ def create_gif_from_folder(foldername,outputname=None,palette=None):
                     durations.append(max(time-previous_time,20))
             except:
                 pass
-                
-            if(im.mode=="RGB" or im.mode=="RGBA"):
-                im2, mask=deal_transparency(im)
-                im2=im.convert("RGB")
-            elif(im.mode=="P"):
-                mask = get_palette_transparency_area(im)
-                im2=im.convert("RGB")
-            else:
-                print("Unhandled image mode:",im.mode)
-                
-            #palette=remove_unused_color_from_palette(palette) #this actually ends up mangling the colors
-            im2 = index_image(im2,palette)
-            tr=unused_color(im2)
-            if not(mask is None):
-                im2=reset_transparency(im2,mask,tr)
-                im2=swap_palette_colors(im2,tr,0)
-            images.append(im2)
+            images.append(index_rgb_alpha(im,palette))
     
     durations+=[20]*(len(images)-len(durations))
     for im in images:
@@ -228,19 +232,7 @@ def create_gif_from_image(filename,outputname=None,palette=None):
     transparency = list()
     try:
         while 1:
-            if(im.mode=="P"):
-                mask = get_palette_transparency_area(im)
-            else:
-                im, mask = deal_transparency(im)
-            # palette=remove_unused_color_from_palette(palette)
-            im2=index_image(im.convert("RGB"),palette)
-            tr=unused_color(im2)
-            # print("Mode:",im.mode)
-            # input(str(mask))
-            if(mask is not None):
-                im2=reset_transparency(im2, mask,tr)
-                im2=swap_palette_colors(im2,tr,0)
-            images.append(im2)
+            images.append(index_rgb_alpha(im,palette))
             
             try:
                 #transparency.append(im.info.get('transparency',transparency))
@@ -261,7 +253,7 @@ def create_gif_from_image(filename,outputname=None,palette=None):
         print(transparency)
         #if(len(transparency)!=0):
         #    transparency=get_background_color(images[0]) #or rather, use the mask created earlier
-        images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=False, duration=durations, transparency=0, loop=0)
+        images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], disposal=2, optimize=False, duration=durations, transparency=0, loop=0)
     else:
         #if(len(transparency)!=0 and transparency[0]!=None):
         images[0].save(outputname, "GIF", optimize=False, transparency=0)
