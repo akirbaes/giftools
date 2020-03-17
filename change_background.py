@@ -79,6 +79,7 @@ def set_rgb_background(image, color=(255, 255, 255), alpha = 255):
     r,g,b,a = data.T
     tr,tg,tb,ta = get_background_color(image)
     background_area = (r==tr) & (b==tb) & (g==tg) 
+    print(color,(alpha,))
     data[..., :][background_area.T] = color+(alpha,)
     
     background = Image.fromarray(data)
@@ -181,7 +182,7 @@ def remove_all_background(filename):
                 out=reorder_background(im) #Put the background color at index 0
             else:
                 #RGB mode (i presume)
-                background_color = get_background_color(im) #not a palette ID, but an RGB value
+                background_color = get_background_color(im.convert("RGB")) #not a palette ID, but an RGB value
                 out = set_background(im,background_color,set_transparent=True) #If several frames have different backgrounds?
             output.append(out)
             
