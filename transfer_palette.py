@@ -76,8 +76,8 @@ def deal_transparency(image):
     image=image.copy()
     data = np.array(image)
     # print(data)
-    print(image.mode)
-    print(data[0][0])
+    #print(image.mode)
+    #print(data[0][0])
     alpha = data[:,:,3:]
     #print(np.unique(alpha))
     alpha[alpha<=alpha_limit]=0
@@ -91,7 +91,7 @@ def deal_transparency(image):
 def unused_color(image):
     data = np.array(image)
     uniquecolors = set(np.unique(data))
-    print(uniquecolors)
+    #print(uniquecolors)
     for i in range(256):
         if(i not in uniquecolors):
             # print("Unused color:",i)
@@ -200,6 +200,7 @@ def create_gif_from_folder(foldername,outputname=None,palette=None):
     previous_time = 0
     if(palette!=None):
         palette=remove_unused_color_from_palette(palette) #this actually ends up mangling the colors, so only do it once
+        #[TODO] Look at the colors of all the frames and not only frame 1
     for file in os.listdir(foldername):
         if file.endswith(".png") or file.endswith(".gif"):
             im = Image.open(foldername+os.sep+file)
@@ -212,6 +213,9 @@ def create_gif_from_folder(foldername,outputname=None,palette=None):
             except:
                 pass
             images.append(index_rgb_alpha(im,palette))
+            #Puts the transparent color at index 0 so that I can simply pass 0 as transparency
+            #Always uses an unused color
+            #[TODO]Crashes when the palette is full
     
     durations+=[20]*(len(images)-len(durations))
     for im in images:
