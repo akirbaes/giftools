@@ -3,9 +3,7 @@ import os.path
 import sys
 import statistics
 import numpy as np
-    
-def get_background_color(image):
-    return statistics.mode((image.getpixel((0,0)),image.getpixel((-1,0)),image.getpixel((0,-1)),image.getpixel((-1,-1))))
+from gif_manips import get_background_color, swap_palette_colors
     
 def rindex(lst, value):
     #https://stackoverflow.com/questions/522372/finding-first-and-last-index-of-some-value-in-a-list-in-python
@@ -90,17 +88,27 @@ def crop_image(filename,borders=0,crop=True):
             im.seek(im.tell()+1)
     except EOFError:
         pass # end of sequence
-    print(transparencies)
+    
+    for i in range(len(output)):
+        out = output[i]
+        tr = out.info.get('transparency', None)
+        if(transparency!=None):
+            #There exist at least one transparency
+            if(tr!=None):
+                out=swap_palette_colors(out,0,tr)
+            else:
+                out=swap_palette_colors(out,0,unused_color(unused_color))
+        output[i]=out
     outname = generate_outname(filename,crop,borders)
     if(len(output)>1):
         if(transparency!=None):
-            output[0].save(outname, save_all=True,append_images=output[1:], disposal=2, transparency=transparency, duration=durations, loop=0)
+            output[0].save(outname, save_all=True,append_images=output[1:], disposal=2, transparency=0, duration=durations, loop=0)
         else:
             output[0].save(outname, save_all=True,append_images=output[1:], disposal=2, duration=durations, loop=0)
             
     else:
         if(transparency!=None):
-            output[0].save(outname, transparency=transparency)
+            output[0].save(outname, transparency=0)
         else:
             output[0].save(outname)
     
