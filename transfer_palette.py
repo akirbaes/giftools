@@ -18,7 +18,7 @@ def index_image(image,palette=None):
         return image.quantize(colors=255, method=2, kmeans=0, palette=palette, dither=0)
     else:
         return image.quantize(colors=255, method=2, kmeans=0, dither=0)
-        
+
 def remove_unused_color_from_palette(image):
     #Will also mess up the image, but no care for it for now
     #[TODO]Gif:do it for every frame and group all the colors in one image
@@ -42,7 +42,7 @@ def remove_unused_color_from_palette(image):
     for rgb in uniquergb:
         newpalette.extend(rgb)
     while len(newpalette)<3*256:
-        newpalette.extend(uniquergb[0])
+        newpalette.extend(min(uniquergb))
     
     #newpalette[0:palettesize] are the used colors
     
@@ -54,7 +54,7 @@ def remove_unused_color_from_palette(image):
     # print(len(image.getpalette()))
     #image.show()
     return image
-
+"""
 def get_outline_color(image):
     bgc = get_background_color(image)
     colors = list()
@@ -69,7 +69,16 @@ def get_outline_color(image):
     
 def get_background_color(image):
     return mode((image.getpixel((0,0)),image.getpixel((-1,0)),image.getpixel((0,-1)),image.getpixel((-1,-1))))
-    
+"""
+def unused_color(image):
+    #Returns unused palette index
+    data = np.array(image)
+    uniquecolors = set(np.unique(data))
+    for i in range(256):
+        if(i not in uniquecolors):
+            return i
+    return None
+
 def reduce_and_get_rgba_transparency_area(image):
     #Remove alpha transparency and makes a binary transparency mask
     if(image.mode=="RGB"):
@@ -85,15 +94,6 @@ def reduce_and_get_rgba_transparency_area(image):
     result = Image.fromarray(data)
     #print(np.unique(alphaonly))
     return result, alphaonly
-
-def unused_color(image):
-    #Returns unused palette index
-    data = np.array(image)
-    uniquecolors = set(np.unique(data))
-    for i in range(256):
-        if(i not in uniquecolors):
-            return i
-    return None
 
 def get_palette_transparency_area(image):
     image=image.copy()
@@ -121,10 +121,14 @@ def reset_transparency(paletteimage,mask,transparency=255):
     result.info["transparency"]=transparency
     return result
     
+#once = 0
 
 def swap_palette_colors(image, source_id=None, target_id = 255):
+    #global once
     #Puts the source_id color at index target_id
     image=image.copy()
+    # if(once==0):
+        # image.show()
     palettedata = image.getpalette()
     if(source_id==None):
         source_id = get_background_color(image) #must be mode P to give an ID
@@ -138,7 +142,6 @@ def swap_palette_colors(image, source_id=None, target_id = 255):
     
     target_color = palettedata[target_index:target_index+3]
     source_color = palettedata[source_index:source_index+3]
-    
     palettedata[target_index:target_index+3] = source_color
     palettedata[source_index:source_index+3] = target_color
     
@@ -146,9 +149,9 @@ def swap_palette_colors(image, source_id=None, target_id = 255):
     area_source = data.copy()
     area_target = data.copy()
     
-    intermediate = (source_id+1+(target_id==source_id+1))%256
+    # intermediate = (source_id+1+(target_id==source_id+1))%256 #Will ruin the intermediate color
+    intermediate=unused_color(image)
     
-    #if(source_id!=0):
     area_source[area_source!=source_id]=intermediate
     area_source[area_source==source_id]=target_id
     area_source[area_source==intermediate]=0
@@ -157,17 +160,21 @@ def swap_palette_colors(image, source_id=None, target_id = 255):
     area_target[area_target==target_id]=source_id
     area_target[area_target==intermediate]=0
     
-    
     data[data==source_id]=0
     data[data==target_id]=0
     data+=area_source+area_target
     
+    ##area_target[[area_target==target_id]],area_source[[area_source==source_id]]=source_id,target_id
+    #Unsafe: doesn't work
+    
     result = Image.fromarray(data)
     result.putpalette(palettedata)
-    
+    # if(once==0):
+        # result.show()
+    # once+=1
     return result
     
-def index_rgb_and_alpha(im,palette=None):       
+def index_rgb_and_alpha(im,palette=None,transparency=0):       
     if(im.mode=="RGB" or im.mode=="RGBA"):
         im2, mask = reduce_and_get_rgba_transparency_area(im)
         im2=im.convert("RGB")
@@ -182,8 +189,8 @@ def index_rgb_and_alpha(im,palette=None):
         #tr=unused_color(im2)
         tr=255
         im2=reset_transparency(im2,mask,tr)
-        #im2=swap_palette_colors(im2,tr,0) 
-        #This created a bug where an existing color would become the "background" transparency color
+        im2=swap_palette_colors(im2,tr,transparency) 
+        ##This created a bug where an existing color would become the "background" transparency color
     return im2
 
 def create_gif_from_folder(foldername,outputname=None,palette=None):
@@ -203,10 +210,9 @@ def create_gif_from_folder(foldername,outputname=None,palette=None):
                     durations.append(max(time-previous_time,20))
             except:
                 pass
-            images.append(index_rgb_and_alpha(im,palette))
+            images.append(index_rgb_and_alpha(im,palette,0))
             #Puts the transparent color at index 255 so that I can simply pass 255 as transparency
-            #Always uses an unused color
-            #[TODO]Crashes when the palette is full
+            #It seems PIL reserves 255 for transparency anyway
     
     durations+=[20]*(len(images)-len(durations))
     #durations[-1]=1600
@@ -215,7 +221,7 @@ def create_gif_from_folder(foldername,outputname=None,palette=None):
     print(len(images),len(durations))
     print(durations)
     #optimize=True will only try to reduce the size of the palette
-    images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=True, tranparency=255,disposal=2, duration=durations, loop=0) 
+    images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], optimize=True, tranparency=0,disposal=2, duration=durations, loop=0) 
 
 def create_gif_from_image(filename,outputname=None,palette=None):
     im = Image.open(filename)
@@ -228,7 +234,7 @@ def create_gif_from_image(filename,outputname=None,palette=None):
     transparency = list()
     try:
         while 1:
-            images.append(index_rgb_alpha(im,palette))
+            images.append(index_rgb_and_alpha(im,palette,0))
             
             try:
                 #transparency.append(im.info.get('transparency',255))
@@ -245,7 +251,7 @@ def create_gif_from_image(filename,outputname=None,palette=None):
     
     if(len(images)>1):
         print(transparency)
-        images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], disposal=2, optimize=False, duration=durations, transparency=255, loop=0)
+        images[0].save(outputname, "GIF", save_all=True,append_images=images[1:], disposal=2, optimize=True, duration=durations, transparency=0, loop=0)
     else:
         images[0].save(outputname, "GIF", optimize=False, transparency=255)
         
