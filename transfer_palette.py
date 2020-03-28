@@ -226,7 +226,7 @@ def create_gif_from_folder(foldername,outputname=None,palette=None):
             im = Image.open(foldername+os.sep+file)
             
             try:
-                time = int(foldername.split(".")[-1])
+                time = int(file.split(".")[-1])
                 if(time!=0):
                     durations.append(max(time-previous_time,20))
             except:
