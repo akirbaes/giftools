@@ -3,71 +3,17 @@ import os.path
 import sys
 from statistics import mode
 import numpy as np
+from gif_manips import get_outline_color, get_background_color, swap_palette_colors
 
-def get_outline_color(image):
-    bgc = get_background_color(image)
-    colors = list()
-    for j in range(image.height):
-        for i in range(image.width):
-            col = image.getpixel((i,j))
-            if(col)!=bgc:
-                colors.append(col)
-                break
-    print(colors)
-    return mode(colors)
-
-def get_background_color(image):
-    return mode((image.getpixel((0,0)),image.getpixel((-1,0)),image.getpixel((0,-1)),image.getpixel((-1,-1))))
 
 def reorder_background(image, background=None):
     #Puts the background color at index 0
     image=image.copy()
-    palettedata = image.getpalette()
     if(background==None):
         background_id = get_background_color(image) #must be a palette ID
     else:
         background_id = background
-    
-    bg_index = background_id*3
-    zero_index = 0
-    
-    zero_color = palettedata[zero_index:zero_index+3]
-    background_color = palettedata[bg_index:bg_index+3]
-    
-    palettedata[zero_index:zero_index+3] = background_color
-    palettedata[bg_index:bg_index+3] = zero_color
-    
-    if(background_id==0):
-        return image
-    #else:
-    #print(list(image.getdata()))
-    """data = list(image.getdata())
-    data = [x if x!=background_color else "a" for x in data]
-    data = [x if x!=0 else background_color for x in data]
-    data = [x if x!="a" else 0 for x in data]
-    result = Image.fromarray(np.array(data))"""
-    data = np.array(image)
-    #print(data)
-    area = data.copy()
-    #I could have swapped it easily using 255 as intermediate value, but then I might lose one palette color
-    #So I stock the 0 area in a different array
-    if(background_id!=1):
-        #Valeur intermédiaire ni 0 ni background_id
-        #J'aurai pu utiliser max((background_id-1)%255,(background_id+1)%255)
-        area[area!=0]=1
-        area[area==0]=background_id
-        area[area==1]=0
-    else:
-        area[area!=0]=2
-        area[area==0]=background_id
-        area[area==2]=0
-    data[data==background_id] = 0
-    data+=area
-    #print("data",data)
-    #print("area",area)
-    result = Image.fromarray(data)
-    result.putpalette(palettedata)
-    
+    return swap_palette_colors(image,0,background_id)
     return result
     
 def set_rgb_background(image, color=(255, 255, 255), alpha = 255):
@@ -102,11 +48,6 @@ def set_paletted_background(image,color=(255,255,255), transparent = False):
     #palettedata = [255,0,0]*256
     #image.show()
     image.putpalette(palettedata)
-    """
-    palettedata = bytearray(image.palette.tobytes())
-    background_color = get_background_color(image) #must be a palette ID
-    palettedata[background_color*3:background_color*3+3] = color
-    image.putpalette(palettedata)"""
     return image
     
 def set_background(image,color=(255,255,255), set_transparent = False):
@@ -116,40 +57,6 @@ def set_background(image,color=(255,255,255), set_transparent = False):
     else:
         return set_rgb_background(image,color,(not set_transparent)*255)
     
-def color_all_background(filename, background_color):
-    im = Image.open(filename)
-    output = list()
-    durations = list()
-    disposals = list()
-    try:
-        while 1:
-            #im.show()
-            if(background_color=="outline"):
-                color = get_outline_color(im.copy().convert("RGB"))
-                r,b,g= color
-                color = r-(r==255)+(r<255),g,b
-                out=set_background(im,color)
-            else:
-                out=set_background(im,background_color)
-            output.append(out)
-            
-            try:
-                durations.append(im.info["duration"])
-                disposals.append(im.disposal_method)
-            except:
-                pass
-            #out.show()
-            im.seek(im.tell()+1)
-            duration = im.info['duration']
-    except EOFError:
-        pass # end of sequence
-    
-    outname = generate_outname(filename,background_color)
-    if(len(output)>1):
-        output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=2, duration=durations, loop=0)
-    else:
-        output[0].save(outname)
-
 def generate_outname(filename,color=None, fill=False):
     parts=filename.split(".")
     nameend = parts[-2] #-1 should be the extension
@@ -198,13 +105,45 @@ def remove_all_background(filename):
     outname = generate_outname(filename,None)
     
     if(len(output)>1):
-        output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=2, duration=durations, loop=0, transparency=0)
+        output[0].save(outname, save_all=True,append_images=output[1:], optimize=True, disposal=2, duration=durations, loop=0, transparency=0)
     else:
         if(output[0].mode=="P"):
             print("Output as",outname,"transparency=",0)
             output[0].save(outname,transparency=0)
         else:
             output[0].save(outname)
+
+def color_all_background(filename, background_color):
+    im = Image.open(filename)
+    output = list()
+    durations = list()
+    disposals = list()
+    try:
+        while 1:
+            #im.show()
+            if(background_color=="outline"):
+                color = get_outline_color(im.copy().convert("RGB"))
+                r,b,g= color
+                color = r-(r==255)+(r<255),g,b
+                out=set_background(im,color)
+            else:
+                out=set_background(im,background_color)
+            output.append(out)
+            
+            try:
+                durations.append(im.info["duration"])
+                disposals.append(im.disposal_method)
+            except:
+                pass
+            im.seek(im.tell()+1)
+    except EOFError:
+        pass # end of sequence
+    
+    outname = generate_outname(filename,background_color)
+    if(len(output)>1):
+        output[0].save(outname, save_all=True,append_images=output[1:], optimize=True, disposal=2, duration=durations, loop=0)
+    else:
+        output[0].save(outname)
 
 def fill_all_background(filename,color=None,transparent=True):
     im = Image.open(filename)
