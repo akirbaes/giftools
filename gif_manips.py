@@ -49,7 +49,7 @@ def remove_unused_color_from_palette(image):
     # image.info["transparency"]=255 #Rethink: Not sure for images that have 256 colors
     #Plus later quantization reserves one color anyway
     image.putpalette(newpalette)
-    image.show()
+    # image.show()
     return image
     
 def get_outline_color(image):
