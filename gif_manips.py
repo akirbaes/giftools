@@ -10,25 +10,27 @@ def index_rgb_and_alpha(im,palette=None,transparency=0):
     #Save the transparency areas beforehand because quantizing doesn't always respect it
     if(im.mode=="RGB" or im.mode=="RGBA"):
         im2, mask = reduce_and_get_rgba_transparency_area(im)
-        im2=im.convert("RGB")
     elif(im.mode=="P"):
         mask = get_palette_transparency_area(im)
-        im2=im.convert("RGB")
     else:
         print("Unhandled image mode:",im.mode)
     
+    im2=im.convert("RGB") #"only RGB or L mode images can be quantized to a palette" says PIL
+    #No RGBA, hence why the transparency has to be handled elsewheere
     im2 = index_image(im2,palette)
     im2.info["transparency"]=None
+    del im2.info["transparency"]
     #im2.show()
     if not(mask is None):
         tr=unused_color(palette)
         #Either works, but 255 is more likely to be displaced later
         if(tr==None):
-            input("Palette too full for transparency!")
+            print("Palette too full for transparency! Using 255")
             tr=255    #TODO: merge an existing color
         #Put the transparent areas back in
         im2=reset_transparency(im2,mask,tr)
         im2=swap_palette_colors(im2,tr,transparency) 
+        im2.info["transparency"]=transparency
         # im2.show()
     return im2
     
@@ -167,10 +169,15 @@ def reset_transparency(pimage,mask,transparency=255):
     data = np.array(pimage)
     data = data*mask #Nullifies transparent areas
     mask = -(mask-1)*transparency
+    maskimage = Image.fromarray(255+mask,"L")
+    
     data = data+mask #Makes transparent area the transparency color
     result = Image.fromarray(data,"P")
     result.putpalette(pimage.getpalette())
     result.info["transparency"]=transparency
+    
+    # maskimage.show()
+    # result.show()
     return result
 
 def swap_palette_colors(image, source_id=None, target_id = 255):
