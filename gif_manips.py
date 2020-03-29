@@ -7,53 +7,54 @@ alpha_limit = 130
 from statistics import mode
 
 def index_image(image,palette=None):
-    #print(palette.mode)
+    #Does not care about alpha transparency: only use when transparency is not an issue
     if(palette!=None):
-        #255: one less to allow one transparency color
+        #255: reserve one for transparency color (to rethink if there's already one)
         return image.quantize(colors=255, method=2, kmeans=0, palette=palette, dither=0)
     else:
         return image.quantize(colors=255, method=2, kmeans=0, dither=0)
-        
-        
+
 def remove_unused_color_from_palette(image):
-    #Will also mess up the image, but no care for it for now
-    #[TODO]Gif:do it for every frame and group all the colors in one image
+    #The image will be turned into a palette square
+    #[TODO] Gif:do it for every frame and group all the colors in one image
     palettedata = image.getpalette()
     data = np.array(image)
     
-    if(image.info.get("transparency",None) != None):
-        #Remove transparency from frame
-        tv = image.info.get("transparency")
-        # print("Transparent color detected in palette",tv)
-        fill = int(tv==0)
-        data[data==tv]=fill
-        # print("Filled with",fill)
-        #trgb = palettedata[tv*3:tv*3+3]
-        #palettedata[tv*3:tv*3+3] = (0,0,0)
-        
     uniquecolors = np.unique(data)
+    if(image.info.get("transparency",None) != None):
+        #Remove transparent, because we don't quantize with it
+        tv = image.info.get("transparency")
+        uniquecolors = uniquecolors[uniquecolors!=tv]
+        #Optional: remove it from the frame too
+        #Chose a color that is NOT tranparency, but exists otherwise
+        fill = uniquecolors[0]
+        data[data==tv]=fill
+        
     uniquergb = [tuple(palettedata[x*3:x*3+3]) for x in uniquecolors]
     palettesize = len(uniquergb)
     newpalette = list()
     for rgb in uniquergb:
         newpalette.extend(rgb)
     while len(newpalette)<3*256:
-        newpalette.extend(min(uniquergb))
+        newpalette.extend(min(uniquergb)) #Fill with +/-darkest color
     
-    #newpalette[0:palettesize] are the used colors
-    
+    # newpalette[0:palettesize] are the used colors
     # print("Unique colors:",len(uniquecolors))
     # print(uniquecolors)
-    image.info["transparency"]=255
+    image=image.resize((16,16))
+    data = np.array(image)
+    for i in range(256):
+        data[i//16][i%16]=min(i,len(uniquergb)-1)
+    image=Image.fromarray(data)
+    # image.info["transparency"]=255 #Rethink: Not sure for images that have 256 colors
+    #Plus later quantization reserves one color anyway
     image.putpalette(newpalette)
-    # print(image.getpalette())
-    # print(len(image.getpalette()))
-    #image.show()
+    image.show()
     return image
     
-    
-    
 def get_outline_color(image):
+    #For pixel-art that has outline
+    #Looks at the first pixels on every side
     bgc = get_background_color(image)
     colors = list()
     for j in range(image.height):
@@ -63,36 +64,35 @@ def get_outline_color(image):
                 colors.append(col)
                 break
     # print(colors)
-    return mode(colors)
-    
+    return mode(colors) #Majority wins
+
 def get_background_color(image):
+    #For pixel-art with solid background
+    #Looks at all the 4 corners
     return mode((image.getpixel((0,0)),image.getpixel((-1,0)),image.getpixel((0,-1)),image.getpixel((-1,-1))))
-    
 
 def unused_color(image):
     #Returns unused palette index
+    #PIL's ImagePalette doesn't actually work, so instead doing it by hand
     data = np.array(image)
     uniquecolors = set(np.unique(data))
     for i in range(256):
         if(i not in uniquecolors):
             return i
     return None
-    
-    
-    
 
-def reduce_and_get_rgba_transparency_area(image):
+def reduce_and_get_rgba_transparency_area(image,cutoff=alpha_limit):
     #Remove alpha transparency and makes a binary transparency mask
     if(image.mode=="RGB"):
         image=image.convert("RGBA")
-        #return image, None
     image=image.copy()
     data = np.array(image)
     alpha = data[:,:,3:]
-    alpha[alpha<=alpha_limit]=0
     #Here: change data's rgb for alpha>alpha_limit
-    alpha[alpha>alpha_limit]=255
+    alpha[alpha<=cutoff]=0
+    alpha[alpha>cutoff]=255
     alphaonly = data[:,:,3].copy()//255
+    #[TODO] try to fix the colors if they come from a black alpha overlay
     result = Image.fromarray(data)
     #print(np.unique(alphaonly))
     return result, alphaonly
@@ -104,8 +104,9 @@ def get_palette_transparency_area(image):
     tr = image.info.get("transparency",None)
     br = image.info.get("background",None)
     data = np.array(image)
-    #print(br,tr,data) #Heavily optimised gifs will have issues
-    #mask = np.where(data==tr,0,1)
+    #print(br,tr,data) #Heavily optimised gifs will have issues here
+    #Because some transparency areas are inherited from previous frames but with a different palette
+    #Create a transparency mask where 1 is solid and 0 is transparent
     if(tr==0):
         data[data!=tr]=1
     else:
@@ -116,26 +117,26 @@ def get_palette_transparency_area(image):
     print("Transparency mask:",data)
     return data
     
-def reset_transparency(paletteimage,mask,transparency=255):
-    # print("Paletteimage mode:",paletteimage.mode)
-    data = np.array(paletteimage)
-    data = data*mask
+def reset_transparency(pimage,mask,transparency=255):
+    #Puts back the transparency areas on the image after quantization
+    data = np.array(pimage)
+    data = data*mask #Nullifies transparent areas
     mask = -(mask-1)*transparency
-    data = data+mask
+    data = data+mask #Makes transparent area the transparency color
     result = Image.fromarray(data,"P")
-    result.putpalette(paletteimage.getpalette())
+    result.putpalette(pimage.getpalette())
     result.info["transparency"]=transparency
     return result
 
 
-def index_rgb_and_alpha(im,palette=None,transparency=0):       
+def index_rgb_and_alpha(im,palette=None,transparency=0):      
+    #Save the transparency areas beforehand because quantizing doesn't respect it
     if(im.mode=="RGB" or im.mode=="RGBA"):
         im2, mask = reduce_and_get_rgba_transparency_area(im)
         im2=im.convert("RGB")
     elif(im.mode=="P"):
         mask = get_palette_transparency_area(im)
         im2=im.convert("RGB")
-        #im2=im
     else:
         print("Unhandled image mode:",im.mode)
     
@@ -143,25 +144,20 @@ def index_rgb_and_alpha(im,palette=None,transparency=0):
     im2.info["transparency"]=None
     #im2.show()
     if not(mask is None):
-        tr=255
         tr=unused_color(palette)
+        #Either works, but 255 is more likely to be displaced later
+        if(tr==None):
+            input("Palette too full for transparency!")
+            tr=255    #TODO: merge an existing color
+        #Put the transparent areas back in
         im2=reset_transparency(im2,mask,tr)
         im2=swap_palette_colors(im2,tr,transparency) 
         # im2.show()
-        ##This created a bug where an existing color would become the "background" transparency color
     return im2
-    
-    
-    
-
-#once = 0
 
 def swap_palette_colors(image, source_id=None, target_id = 255):
-    #global once
     #Puts the source_id color at index target_id
     image=image.copy()
-    # if(once==0):
-    #image.show()
     palettedata = image.getpalette()
     if(source_id==None):
         source_id = get_background_color(image) #must be mode P to give an ID
@@ -172,49 +168,20 @@ def swap_palette_colors(image, source_id=None, target_id = 255):
         
     source_index = source_id*3
     target_index = target_id*3
-    
+    #Swap the palette entries
     target_color = palettedata[target_index:target_index+3]
     source_color = palettedata[source_index:source_index+3]
     palettedata[target_index:target_index+3] = source_color
     palettedata[source_index:source_index+3] = target_color
     
     data = np.array(image)
-    area_source = data.copy()
-    area_target = data.copy()
-    
-    # intermediate = (source_id+1+(target_id==source_id+1))%256 #Will ruin the intermediate color
-    """
-    intermediate=unused_color(image)
-    print(area_source[area_source!=source_id])
-    area_source[area_source!=source_id]=intermediate
-    area_source[area_source==source_id]=target_id
-    area_source[area_source==intermediate]=0
-        
-    area_target[area_target!=target_id]=intermediate
-    area_target[area_target==target_id]=source_id
-    area_target[area_target==intermediate]=0
-    
-    data[data==source_id]=0
-    data[data==target_id]=0
-    data+=area_source+area_target
-    """
-    #anti_source_mask = np.where(data==source_id,0,1)
-    #anti_target_mask = np.where(data==target_id,0,1)
+    #Exchange the image areas
     source_mask = np.where(data==source_id,1,0)
     target_mask = np.where(data==target_id,1,0)
-    #data*=anti_source_mask
-    #data*=anti_target_mask
     data = np.where(source_mask==1,target_id,data)
     data = np.where(target_mask==1,source_id,data)
-    # data[source_mask]=target_id
-    # data[target_mask]=source_id
-    
-    #Unsafe?: doesn't work
     
     result = Image.fromarray(data)
     result.putpalette(palettedata)
-    # if(once==0):
-    #result.show()
-    # once+=1
     return result
     
