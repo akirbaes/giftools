@@ -12,25 +12,39 @@ from statistics import mode
 #You can also use generate_palette.py to create a bash script that makes the argument pass easier with drag-and-drop.
     
 from gif_manips import remove_unused_color_from_palette, index_rgb_and_alpha
-   
-def create_gif_from_folder(foldername,outputname=None,palette=None):
+
+def create_gif_from_folder(foldername,outputname=None,palette=None,allow_dropped_frames=True):
     images = list()
     durations = list()
     previous_time = 0
     if(palette!=None):
         palette=remove_unused_color_from_palette(palette) #this actually ends up mangling the colors, so only do it once
         #[TODO] Look at the colors of all the frames and not only frame 1
+    borrowed_time = 0
     for file in os.listdir(foldername):
         if file.endswith(".png") or file.endswith(".gif"):
             im = Image.open(foldername+os.sep+file)
             
             try:
-                time = int(file.split(".")[-1])
+            
+                time = int(file.split(".")[-2])
                 if(time!=0):
-                    durations.append(max(time-previous_time,20))
+                    
+                    duration = time-previous_time
+                    if(allow_dropped_frames):
+                        duration-=borrowed_time
+                        if(duration==0):
+                            borrowed_time=0
+                            continue
+                        elif(duration==10):
+                            borrowed_time = 20-duration
+                    else:
+                        if(duration==10):
+                            duration=20
+                    durations.append(duration)
                     previous_time = time
-            except:
-                pass
+            except Exception as e:
+                print(e)
             images.append(index_rgb_and_alpha(im,palette,0))
             #Puts the transparent color at index 255 so that I can simply pass 255 as transparency
             #It seems PIL reserves 255 for transparency anyway
@@ -39,7 +53,9 @@ def create_gif_from_folder(foldername,outputname=None,palette=None):
     durations+=[20]*(len(images)-len(durations))
     #durations[-1]=1600
     for im in images:
-        del im.info['transparency']
+        try:
+            del im.info['transparency']
+        except: pass
     print(len(images),len(durations))
     print(durations)
     #optimize=True will only try to reduce the size of the palette

@@ -6,14 +6,32 @@ import numpy as np
 alpha_limit = 130
 from statistics import mode
 
-def index_image(image,palette=None):
-    #Does not care about alpha transparency: only use when transparency is not an issue
-    if(palette!=None):
-        #255: reserve one for transparency color (to rethink if there's already one)
-        return image.quantize(colors=255, method=2, kmeans=0, palette=palette, dither=0)
+def index_rgb_and_alpha(im,palette=None,transparency=0):      
+    #Save the transparency areas beforehand because quantizing doesn't always respect it
+    if(im.mode=="RGB" or im.mode=="RGBA"):
+        im2, mask = reduce_and_get_rgba_transparency_area(im)
+        im2=im.convert("RGB")
+    elif(im.mode=="P"):
+        mask = get_palette_transparency_area(im)
+        im2=im.convert("RGB")
     else:
-        return image.quantize(colors=255, method=2, kmeans=0, dither=0)
-
+        print("Unhandled image mode:",im.mode)
+    
+    im2 = index_image(im2,palette)
+    im2.info["transparency"]=None
+    #im2.show()
+    if not(mask is None):
+        tr=unused_color(palette)
+        #Either works, but 255 is more likely to be displaced later
+        if(tr==None):
+            input("Palette too full for transparency!")
+            tr=255    #TODO: merge an existing color
+        #Put the transparent areas back in
+        im2=reset_transparency(im2,mask,tr)
+        im2=swap_palette_colors(im2,tr,transparency) 
+        # im2.show()
+    return im2
+    
 def remove_unused_color_from_palette(image):
     #The image will be turned into a palette square
     #[TODO] Gif:do it for every frame and group all the colors in one image
@@ -81,6 +99,33 @@ def unused_color(image):
             return i
     return None
 
+def index_image(image,palette=None):
+    #Does not care about alpha transparency: only use when transparency is not an issue
+    if(palette!=None):
+        #255: reserve one for transparency color (to rethink if there's already one)
+        return image.quantize(colors=255, method=2, kmeans=0, palette=palette, dither=0)
+    else:
+        return image.quantize(colors=255, method=2, kmeans=0, dither=0)
+
+def reverse_black_blending(image):
+    #Doesn't work.
+    #https://stackoverflow.com/questions/2139350/what-is-the-formula-for-extracting-the-src-from-a-calculated-blendmode
+    if(image.mode!=("RGBA")):
+        print("Wrong image mode for this")
+        return image
+    data = np.array(image)
+    
+    width,height=image.size
+    for x in range(width):
+        for y in range(height):
+            rn,gn,bn,alpha=data[y][x]
+            if(alpha<255 and alpha>0):
+                a=alpha/255
+                data[y][x] = (min(int(round(rn/a)),255),min(int(round(gn/a)),255),min(int(round(bn/a)),255),255)
+    result = Image.fromarray(data)
+    result.show()
+    return result
+
 def reduce_and_get_rgba_transparency_area(image,cutoff=alpha_limit):
     #Remove alpha transparency and makes a binary transparency mask
     if(image.mode=="RGB"):
@@ -127,33 +172,6 @@ def reset_transparency(pimage,mask,transparency=255):
     result.putpalette(pimage.getpalette())
     result.info["transparency"]=transparency
     return result
-
-
-def index_rgb_and_alpha(im,palette=None,transparency=0):      
-    #Save the transparency areas beforehand because quantizing doesn't respect it
-    if(im.mode=="RGB" or im.mode=="RGBA"):
-        im2, mask = reduce_and_get_rgba_transparency_area(im)
-        im2=im.convert("RGB")
-    elif(im.mode=="P"):
-        mask = get_palette_transparency_area(im)
-        im2=im.convert("RGB")
-    else:
-        print("Unhandled image mode:",im.mode)
-    
-    im2 = index_image(im2,palette)
-    im2.info["transparency"]=None
-    #im2.show()
-    if not(mask is None):
-        tr=unused_color(palette)
-        #Either works, but 255 is more likely to be displaced later
-        if(tr==None):
-            input("Palette too full for transparency!")
-            tr=255    #TODO: merge an existing color
-        #Put the transparent areas back in
-        im2=reset_transparency(im2,mask,tr)
-        im2=swap_palette_colors(im2,tr,transparency) 
-        # im2.show()
-    return im2
 
 def swap_palette_colors(image, source_id=None, target_id = 255):
     #Puts the source_id color at index target_id
