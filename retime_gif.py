@@ -4,57 +4,17 @@ import re
 import os
 from fractions import Fraction
 import numpy as np
-
+import statistics
+from gif_manips import get_background_color, unused_color, swap_palette_colors
 
 def reorder_background(image, background=None):
     #Puts the background color at index 0
     image=image.copy()
-    palettedata = image.getpalette()
     if(background==None):
         background_id = get_background_color(image) #must be a palette ID
     else:
         background_id = background
-    
-    bg_index = background_id*3
-    zero_index = 0
-    
-    zero_color = palettedata[zero_index:zero_index+3]
-    background_color = palettedata[bg_index:bg_index+3]
-    
-    palettedata[zero_index:zero_index+3] = background_color
-    palettedata[bg_index:bg_index+3] = zero_color
-    
-    if(background_id==0):
-        return image
-    #else:
-    #print(list(image.getdata()))
-    """data = list(image.getdata())
-    data = [x if x!=background_color else "a" for x in data]
-    data = [x if x!=0 else background_color for x in data]
-    data = [x if x!="a" else 0 for x in data]
-    result = Image.fromarray(np.array(data))"""
-    data = np.array(image)
-    #print(data)
-    area = data.copy()
-    #I could have swapped it easily using 255 as intermediate value, but then I might lose one palette color
-    #So I stock the 0 area in a different array
-    if(background_id!=1):
-        #Valeur intermédiaire ni 0 ni background_id
-        #J'aurai pu utiliser max((background_id-1)%255,(background_id+1)%255)
-        area[area!=0]=1
-        area[area==0]=background_id
-        area[area==1]=0
-    else:
-        area[area!=0]=2
-        area[area==0]=background_id
-        area[area==2]=0
-    data[data==background_id] = 0
-    data+=area
-    #print("data",data)
-    #print("area",area)
-    result = Image.fromarray(data)
-    result.putpalette(palettedata)
-    
+    return swap_palette_colors(image,0,background_id)
     return result
 
 def generate_outname(filename,timing,mode):
@@ -100,7 +60,8 @@ def retime_gif(filename,timing,mode="set"):
     durations = list()
     try:
         while 1:
-            output.append(reorder_background(im,im.info.get("transparency",None)))
+            #output.append(reorder_background(im,im.info.get("transparency",None)))
+            output.append(im.copy())
             if(mode=="set"):
                 durations.append(timing[0])
             if(mode=="multiply"):
@@ -123,9 +84,23 @@ def retime_gif(filename,timing,mode="set"):
         outname = generate_outname(filename,[durations[0]],"set")
     else:
         outname = generate_outname(filename,timing,mode)
+        
+    if(transparencies):
+        #There exist at least one transparency
+        for i in range(len(output)):
+            out=output[i]
+            tr = out.info.get("transparency",None)
+            if(tr!=None):
+                output[i]=swap_palette_colors(out,tr,0)
+            else:
+                output[i]=swap_palette_colors(out,unused_color(out),0)
+                #[TODO] test mixed transpareny/no transpareny
+    print(output)
+    print(outname)
+        
     if(len(output)>1):
         if(transparencies):
-            print(transparencies)
+            #print(transparencies)
             output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=2, duration=durations, loop=0, transparency=0)
         else:
             output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=2, duration=durations, loop=0)
