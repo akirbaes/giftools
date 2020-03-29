@@ -97,7 +97,7 @@ def crop_image(filename,borders=0,crop=True):
             if(tr!=None):
                 out=swap_palette_colors(out,0,tr)
             else:
-                out=swap_palette_colors(out,0,unused_color(unused_color))
+                out=swap_palette_colors(out,0,unused_color(out))
         output[i]=out
     outname = generate_outname(filename,crop,borders)
     if(len(output)>1):
