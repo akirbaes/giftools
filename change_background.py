@@ -105,7 +105,7 @@ def remove_all_background(filename):
     outname = generate_outname(filename,None)
     
     if(len(output)>1):
-        output[0].save(outname, save_all=True,append_images=output[1:], optimize=True, disposal=2, duration=durations, loop=0, transparency=0)
+        output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=2, duration=durations, loop=0, transparency=0)
     else:
         if(output[0].mode=="P"):
             print("Output as",outname,"transparency=",0)
@@ -141,7 +141,7 @@ def color_all_background(filename, background_color):
     
     outname = generate_outname(filename,background_color)
     if(len(output)>1):
-        output[0].save(outname, save_all=True,append_images=output[1:], optimize=True, disposal=2, duration=durations, loop=0)
+        output[0].save(outname, save_all=True,append_images=output[1:], optimize=False, disposal=2, duration=durations, loop=0)
     else:
         output[0].save(outname)
 
@@ -186,8 +186,8 @@ def fill_paletted_background(image, color=None):
     data = np.array(image)
     uniquecolors = np.unique(data)
     for i in range(256):
-        if(i not in uniquecolors):
-            new_bg = i
+        if(255-i not in uniquecolors):
+            new_bg = 255-i
             break
             #Will be set at 0 later
     
