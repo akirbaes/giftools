@@ -27,6 +27,7 @@ def create_gif_from_folder(foldername,outputname=None,palette=None,default_durat
     total=0
     dropped = 0
     added = 0
+    duration = 0
     for file in os.listdir(foldername):
         if file.endswith(".png") or file.endswith(".gif"):
             total+=1
@@ -62,8 +63,8 @@ def create_gif_from_folder(foldername,outputname=None,palette=None,default_durat
                         duration=max(20,duration)
             except Exception as e:
                 duration = default_duration
-                
-            durations.append(duration)
+            if(duration):
+                durations.append(duration)
             images.append(index_rgb_and_alpha(im,palette,0))
             added+=1
             # images[-1].show()

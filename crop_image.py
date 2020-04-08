@@ -80,7 +80,10 @@ def crop_image(filename,borders=0,crop=True):
             duration = im.info.get('duration', None)
             if(duration is not None):
                 durations.append(duration)
-            disposal = im.disposal_method
+                
+            disposal=None
+            try: disposal = im.disposal_method
+            except: pass
             if(disposal is not None):
                 disposals.append(disposal)
             output.append(out)
@@ -102,15 +105,22 @@ def crop_image(filename,borders=0,crop=True):
     outname = generate_outname(filename,crop,borders)
     if(len(output)>1):
         if(transparency!=None):
-            output[0].save(outname, save_all=True,append_images=output[1:], disposal=2, transparency=0, duration=durations, loop=0)
+            output[0].save(outname, save_all=True,append_images=output[1:], disposal=disposals, transparency=0, duration=durations, loop=0)
         else:
-            output[0].save(outname, save_all=True,append_images=output[1:], disposal=2, duration=durations, loop=0)
+            output[0].save(outname, save_all=True,append_images=output[1:], disposal=disposals, duration=durations, loop=0)
             
     else:
         if(transparency!=None):
             output[0].save(outname, transparency=0)
         else:
             output[0].save(outname)
+    
+def isint(arg):
+    try:
+        int(arg)
+        return True
+    except:
+        return False
     
 if __name__ == "__main__":
     import sys
@@ -121,7 +131,7 @@ if __name__ == "__main__":
         
         files = list()
         for arg in sys.argv[1:]:
-            if(arg.isnumeric()):
+            if(isint(arg)):
                 border = int(arg)
             elif(arg=="--crop"):
                 crop=True
