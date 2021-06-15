@@ -49,7 +49,7 @@ def crop_image(filename,borders=0,crop=True):
                 
                 for x in range(width):
                     for y in range(height):
-                        if(data[y][x]!=bg):
+                        if(tuple(data[y][x]) != tuple(bg)):
                             left = min(left,x)
                             right = max(right,x+1)
                             top = min(top,y)
